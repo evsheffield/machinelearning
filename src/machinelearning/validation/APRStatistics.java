@@ -2,6 +2,14 @@ package machinelearning.validation;
 
 import java.util.ArrayList;
 
+/**
+ * A grouping of accuracy, precision, and recall for
+ * a dataset with multiple classes.
+ *
+ * Also stores a class confusion matrix.
+ * @author evanc
+ *
+ */
 public class APRStatistics {
 	private double accuracy;
 	private ArrayList<Integer> classLabels;
