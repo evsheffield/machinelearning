@@ -56,6 +56,14 @@ public class Perceptron {
 		}
 	}
 
+	public void trainByDualLinearKernel() {
+		trainByDualPerceptron((x, z) -> x.dotProduct(z));
+	}
+
+	public void trainByDualGaussianKernel() {
+
+	}
+
 	public void trainByDualPerceptron(BiFunction<RealVector, RealVector, Double> kernelFunction) {
 		// Initialize our list of alphas, which represent the number of times we
 		// have made a mistake for each item in the training data
@@ -65,6 +73,7 @@ public class Perceptron {
 
 		int currentEpoch = 0;
 		while(++currentEpoch <= MAX_EPOCHS) {
+			boolean madeMistake = false;
 			// For one epoch, iterate over all the training samples
 			for(int i = 0; i < N; i++) {
 				RealVector x = designMatrix.getRowVector(i);
@@ -73,10 +82,26 @@ public class Perceptron {
 				double estimate = 0;
 				for(int j = 0; j < N; j++) {
 					RealVector xj = designMatrix.getRowVector(j);
-					// TODO
-//					double yj = getLabel(labelVector, j)
+					double yj = getLabel(labelVector, j);
+					double alphaj = alphas.getEntry(j);
+
+					estimate += (alphaj * yj * kernelFunction.apply(xj, x));
+				}
+				double yHat = estimate >= 0 ? 1 : -1;
+				if(y != yHat) {
+					alphas.setEntry(i, alphas.getEntry(i) + 1);
+					madeMistake = true;
 				}
 			}
+
+			if(!madeMistake) {
+				break;
+			}
+		}
+
+		// Set the weights from the alpha values
+		for(int i = 0; i < N; i++) {
+			weights = weights.add(designMatrix.getRowVector(i).mapMultiply(alphas.getEntry(i) * getLabel(labelVector, i)));
 		}
 	}
 

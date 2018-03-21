@@ -87,10 +87,18 @@ public class ClassificationExecutor2 {
 		DescriptiveStatistics testRecallStats = new DescriptiveStatistics();
 		DescriptiveStatistics trainingPrecisionStats = new DescriptiveStatistics();
 		DescriptiveStatistics testPrecisionStats = new DescriptiveStatistics();
+		DescriptiveStatistics trainingDualAccuracyStats = new DescriptiveStatistics();
+		DescriptiveStatistics testDualAccuracyStats = new DescriptiveStatistics();
+		DescriptiveStatistics trainingDualRecallStats = new DescriptiveStatistics();
+		DescriptiveStatistics testDualRecallStats = new DescriptiveStatistics();
+		DescriptiveStatistics trainingDualPrecisionStats = new DescriptiveStatistics();
+		DescriptiveStatistics testDualPrecisionStats = new DescriptiveStatistics();
 		for(TrainingValidationMatrixSet fold : matrixFolds) {
 			// Create and train a perceptron
 			Perceptron percy = new Perceptron(fold.getTrainingSet());
+			Perceptron percyDual = new Perceptron(fold.getTrainingSet());
 			percy.trainByPerceptronAlgorithm(1);
+			percyDual.trainByDualLinearKernel();
 
 			// Evaluate performance
 			BinaryAPRStatistics trainingStats = percy.getPerformance(fold.getTrainingSet());
@@ -101,9 +109,20 @@ public class ClassificationExecutor2 {
 			testRecallStats.addValue(testStats.getRecall());
 			trainingPrecisionStats.addValue(trainingStats.getPrecision());
 			testPrecisionStats.addValue(testStats.getPrecision());
+
+			BinaryAPRStatistics trainingDualStats = percyDual.getPerformance(fold.getTrainingSet());
+			BinaryAPRStatistics testDualStats = percyDual.getPerformance(fold.getTestSet());
+			trainingDualAccuracyStats.addValue(trainingDualStats.getAccuracy());
+			testDualAccuracyStats.addValue(testDualStats.getAccuracy());
+			trainingDualRecallStats.addValue(trainingDualStats.getRecall());
+			testDualRecallStats.addValue(testDualStats.getRecall());
+			trainingDualPrecisionStats.addValue(trainingDualStats.getPrecision());
+			testDualPrecisionStats.addValue(testDualStats.getPrecision());
 		}
 
 		// Print summary statistics about the model's performance
+		System.out.println("Perceptron Algorithm");
+		System.out.println("=====================");
 		System.out.println("\nTraining Mean Accuracy  : " + trainingAccuracyStats.getMean());
 		System.out.println("Training Accuracy SD    : " + trainingAccuracyStats.getStandardDeviation());
 		System.out.println("Training Mean Recall    : " + trainingRecallStats.getMean());
@@ -116,6 +135,21 @@ public class ClassificationExecutor2 {
 		System.out.println("Test Recall SD      : " + testRecallStats.getStandardDeviation());
 		System.out.println("Test Mean Precision : " + testPrecisionStats.getMean());
 		System.out.println("Test Precision SD   : " + testPrecisionStats.getStandardDeviation());
+
+		System.out.println("\n\nDual, Linear Kernel");
+		System.out.println("=====================");
+		System.out.println("\nTraining Mean Accuracy  : " + trainingDualAccuracyStats.getMean());
+		System.out.println("Training Accuracy SD    : " + trainingDualAccuracyStats.getStandardDeviation());
+		System.out.println("Training Mean Recall    : " + trainingDualRecallStats.getMean());
+		System.out.println("Training Recall SD      : " + trainingDualRecallStats.getStandardDeviation());
+		System.out.println("Training Mean Precision : " + trainingDualPrecisionStats.getMean());
+		System.out.println("Training Precision SD   : " + trainingDualPrecisionStats.getStandardDeviation());
+		System.out.println("\nTest Mean Accuracy  : " + testDualAccuracyStats.getMean());
+		System.out.println("Test Accuracy SD    : " + testDualAccuracyStats.getStandardDeviation());
+		System.out.println("Test Mean Recall    : " + testDualRecallStats.getMean());
+		System.out.println("Test Recall SD      : " + testDualRecallStats.getStandardDeviation());
+		System.out.println("Test Mean Precision : " + testDualPrecisionStats.getMean());
+		System.out.println("Test Precision SD   : " + testDualPrecisionStats.getStandardDeviation());
 	}
 
 	/**
