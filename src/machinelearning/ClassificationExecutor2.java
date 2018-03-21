@@ -17,6 +17,7 @@ import machinelearning.classification.DocumentClassification;
 import machinelearning.classification.DocumentClassificationModelType;
 import machinelearning.classification.LogisticRegression;
 import machinelearning.classification.Perceptron;
+import machinelearning.classification.PerceptronTrainingType;
 import machinelearning.dataset.Dataset;
 import machinelearning.dataset.DocumentDataset;
 import machinelearning.dataset.Feature;
@@ -45,13 +46,30 @@ public class ClassificationExecutor2 {
 		System.out.println("--------------------------------");
 		System.out.println("Problem 1 - Perceptron");
 		System.out.println("--------------------------------");
+
+		System.out.println("Perceptron Dataset");
+		System.out.println("*******************\n");
 		Dataset perceptronDataset = new Dataset(
 				"data/perceptronData.csv",
 				generateContinuousFeatureList(4),
 				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
 		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
 
-		testPerceptron(perceptronCross);
+		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
+
+		System.out.println("Spiral Dataset");
+		System.out.println("*******************\n");
+		Dataset spiralDataset = new Dataset(
+				"data/twoSpirals.csv",
+				generateContinuousFeatureList(2),
+				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
+		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
+
+//		System.out.print("Finding best gamma for Gaussian kernel... ");
+//		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
+//		System.out.println(bandwidth);
+
+//		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualGaussianKernel});
 
 		System.out.println("Done!");
 	}
@@ -71,85 +89,117 @@ public class ClassificationExecutor2 {
 		return features;
 	}
 
-	private static void testPerceptron(KFoldCrossValidation cross) {
+	private static void testPerceptron(KFoldCrossValidation cross, PerceptronTrainingType[] trainingTypes) {
 		// Convert the folds to matrix form, add the constant feature,
 		// and z-score normalize the features
 		ArrayList<TrainingValidationMatrixSet> matrixFolds = new ArrayList<TrainingValidationMatrixSet>();
 		for(TrainingValidationSet fold : cross.getFolds()) {
 			TrainingValidationMatrixSet newFold = new TrainingValidationMatrixSet(fold, true);
-			newFold.zScoreNormalizeContinuousFeatures();
 			matrixFolds.add(newFold);
 		}
 
-		DescriptiveStatistics trainingAccuracyStats = new DescriptiveStatistics();
-		DescriptiveStatistics testAccuracyStats = new DescriptiveStatistics();
-		DescriptiveStatistics trainingRecallStats = new DescriptiveStatistics();
-		DescriptiveStatistics testRecallStats = new DescriptiveStatistics();
-		DescriptiveStatistics trainingPrecisionStats = new DescriptiveStatistics();
-		DescriptiveStatistics testPrecisionStats = new DescriptiveStatistics();
-		DescriptiveStatistics trainingDualAccuracyStats = new DescriptiveStatistics();
-		DescriptiveStatistics testDualAccuracyStats = new DescriptiveStatistics();
-		DescriptiveStatistics trainingDualRecallStats = new DescriptiveStatistics();
-		DescriptiveStatistics testDualRecallStats = new DescriptiveStatistics();
-		DescriptiveStatistics trainingDualPrecisionStats = new DescriptiveStatistics();
-		DescriptiveStatistics testDualPrecisionStats = new DescriptiveStatistics();
-		for(TrainingValidationMatrixSet fold : matrixFolds) {
-			// Create and train a perceptron
-			Perceptron percy = new Perceptron(fold.getTrainingSet());
-			Perceptron percyDual = new Perceptron(fold.getTrainingSet());
-			percy.trainByPerceptronAlgorithm(1);
-			percyDual.trainByDualLinearKernel();
+		ArrayList<ArrayList<DescriptiveStatistics>> allStats = new ArrayList<ArrayList<DescriptiveStatistics>>();
+		for(int i = 0; i < trainingTypes.length; i++) {
+			ArrayList<DescriptiveStatistics> stats = new ArrayList<DescriptiveStatistics>();
+			// Training APR and Test APR
+			stats.add(new DescriptiveStatistics());
+			stats.add(new DescriptiveStatistics());
+			stats.add(new DescriptiveStatistics());
+			stats.add(new DescriptiveStatistics());
+			stats.add(new DescriptiveStatistics());
+			stats.add(new DescriptiveStatistics());
 
-			// Evaluate performance
-			BinaryAPRStatistics trainingStats = percy.getPerformance(fold.getTrainingSet());
-			BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet());
-			trainingAccuracyStats.addValue(trainingStats.getAccuracy());
-			testAccuracyStats.addValue(testStats.getAccuracy());
-			trainingRecallStats.addValue(trainingStats.getRecall());
-			testRecallStats.addValue(testStats.getRecall());
-			trainingPrecisionStats.addValue(trainingStats.getPrecision());
-			testPrecisionStats.addValue(testStats.getPrecision());
-
-			BinaryAPRStatistics trainingDualStats = percyDual.getPerformance(fold.getTrainingSet());
-			BinaryAPRStatistics testDualStats = percyDual.getPerformance(fold.getTestSet());
-			trainingDualAccuracyStats.addValue(trainingDualStats.getAccuracy());
-			testDualAccuracyStats.addValue(testDualStats.getAccuracy());
-			trainingDualRecallStats.addValue(trainingDualStats.getRecall());
-			testDualRecallStats.addValue(testDualStats.getRecall());
-			trainingDualPrecisionStats.addValue(trainingDualStats.getPrecision());
-			testDualPrecisionStats.addValue(testDualStats.getPrecision());
+			allStats.add(stats);
 		}
 
-		// Print summary statistics about the model's performance
-		System.out.println("Perceptron Algorithm");
-		System.out.println("=====================");
-		System.out.println("\nTraining Mean Accuracy  : " + trainingAccuracyStats.getMean());
-		System.out.println("Training Accuracy SD    : " + trainingAccuracyStats.getStandardDeviation());
-		System.out.println("Training Mean Recall    : " + trainingRecallStats.getMean());
-		System.out.println("Training Recall SD      : " + trainingRecallStats.getStandardDeviation());
-		System.out.println("Training Mean Precision : " + trainingPrecisionStats.getMean());
-		System.out.println("Training Precision SD   : " + trainingPrecisionStats.getStandardDeviation());
-		System.out.println("\nTest Mean Accuracy  : " + testAccuracyStats.getMean());
-		System.out.println("Test Accuracy SD    : " + testAccuracyStats.getStandardDeviation());
-		System.out.println("Test Mean Recall    : " + testRecallStats.getMean());
-		System.out.println("Test Recall SD      : " + testRecallStats.getStandardDeviation());
-		System.out.println("Test Mean Precision : " + testPrecisionStats.getMean());
-		System.out.println("Test Precision SD   : " + testPrecisionStats.getStandardDeviation());
+		for(TrainingValidationMatrixSet fold : matrixFolds) {
 
-		System.out.println("\n\nDual, Linear Kernel");
-		System.out.println("=====================");
-		System.out.println("\nTraining Mean Accuracy  : " + trainingDualAccuracyStats.getMean());
-		System.out.println("Training Accuracy SD    : " + trainingDualAccuracyStats.getStandardDeviation());
-		System.out.println("Training Mean Recall    : " + trainingDualRecallStats.getMean());
-		System.out.println("Training Recall SD      : " + trainingDualRecallStats.getStandardDeviation());
-		System.out.println("Training Mean Precision : " + trainingDualPrecisionStats.getMean());
-		System.out.println("Training Precision SD   : " + trainingDualPrecisionStats.getStandardDeviation());
-		System.out.println("\nTest Mean Accuracy  : " + testDualAccuracyStats.getMean());
-		System.out.println("Test Accuracy SD    : " + testDualAccuracyStats.getStandardDeviation());
-		System.out.println("Test Mean Recall    : " + testDualRecallStats.getMean());
-		System.out.println("Test Recall SD      : " + testDualRecallStats.getStandardDeviation());
-		System.out.println("Test Mean Precision : " + testDualPrecisionStats.getMean());
-		System.out.println("Test Precision SD   : " + testDualPrecisionStats.getStandardDeviation());
+			for(int i = 0; i < trainingTypes.length; i++) {
+				PerceptronTrainingType trainingType = trainingTypes[i];
+				// Create and train a perceptron
+				Perceptron percy = new Perceptron(fold.getTrainingSet());
+				switch(trainingType) {
+					case DualLinearKernel:
+						percy.trainByDualLinearKernel();
+						break;
+					case DualGaussianKernel:
+						percy.trainByDualGaussianKernel(0.08);
+						break;
+					case Perceptron:
+					default:
+						percy.trainByPerceptronAlgorithm(1);
+						break;
+
+				}
+
+				BinaryAPRStatistics trainingStats = percy.getPerformance(fold.getTrainingSet());
+				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet());
+
+				ArrayList<DescriptiveStatistics> stats = allStats.get(i);
+				stats.get(0).addValue(trainingStats.getAccuracy());
+				stats.get(1).addValue(trainingStats.getRecall());
+				stats.get(2).addValue(trainingStats.getPrecision());
+				stats.get(3).addValue(testStats.getAccuracy());
+				stats.get(4).addValue(testStats.getRecall());
+				stats.get(5).addValue(testStats.getPrecision());
+			}
+		}
+
+		for(int i = 0; i < trainingTypes.length; i++) {
+			PerceptronTrainingType trainingType = trainingTypes[i];
+			ArrayList<DescriptiveStatistics> stats = allStats.get(i);
+
+			// Print summary statistics about the model's performance
+			System.out.println(trainingType);
+			System.out.println("=====================");
+			System.out.println("\nTraining Mean Accuracy  : " + stats.get(0).getMean());
+			System.out.println("Training Accuracy SD    : " + stats.get(0).getStandardDeviation());
+			System.out.println("Training Mean Recall    : " + stats.get(1).getMean());
+			System.out.println("Training Recall SD      : " + stats.get(1).getStandardDeviation());
+			System.out.println("Training Mean Precision : " + stats.get(2).getMean());
+			System.out.println("Training Precision SD   : " + stats.get(2).getStandardDeviation());
+			System.out.println("\nTest Mean Accuracy  : " + stats.get(3).getMean());
+			System.out.println("Test Accuracy SD    : " + stats.get(3).getStandardDeviation());
+			System.out.println("Test Mean Recall    : " + stats.get(4).getMean());
+			System.out.println("Test Recall SD      : " + stats.get(4).getStandardDeviation());
+			System.out.println("Test Mean Precision : " + stats.get(5).getMean());
+			System.out.println("Test Precision SD   : " + stats.get(5).getStandardDeviation());
+		}
+	}
+
+	private static double gridSearchBandwidth(double min, double max, double incr, KFoldCrossValidation cross) {
+		// Convert the folds to matrix form, add the constant feature,
+		// and z-score normalize the features
+		ArrayList<TrainingValidationMatrixSet> matrixFolds = new ArrayList<TrainingValidationMatrixSet>();
+		for(TrainingValidationSet fold : cross.getFolds()) {
+			TrainingValidationMatrixSet newFold = new TrainingValidationMatrixSet(fold, true);
+			matrixFolds.add(newFold);
+		}
+
+		double bandwidth = min;
+		double bestBandwidth = min;
+		double bestAccuracy = 0;
+		while(bandwidth <= max) {
+			System.out.println("testing " + bandwidth);
+			DescriptiveStatistics testAccuracyStats = new DescriptiveStatistics();
+			for(TrainingValidationMatrixSet fold : matrixFolds) {
+				// Create and train a perceptron
+				Perceptron percy = new Perceptron(fold.getTrainingSet());
+				percy.trainByDualGaussianKernel(bandwidth);
+
+				// Evaluate performance
+				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet());
+				testAccuracyStats.addValue(testStats.getAccuracy());
+			}
+			double meanAccuracy = testAccuracyStats.getMean();
+			if(meanAccuracy > bestAccuracy) {
+				bestBandwidth = bandwidth;
+				bestAccuracy = meanAccuracy;
+			}
+
+			bandwidth += incr;
+		}
+		return bestBandwidth;
 	}
 
 	/**

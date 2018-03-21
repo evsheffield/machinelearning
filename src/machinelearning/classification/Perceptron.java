@@ -12,12 +12,13 @@ import machinelearning.validation.BinaryAPRStatistics;
 
 public class Perceptron {
 	private RealVector weights;
+	private RealVector alphas;
 	private RealMatrix designMatrix;
 	private RealVector labelVector;
 	private int N;
 	private int m;
 
-	private static final int MAX_EPOCHS = 500;
+	private static final int MAX_EPOCHS = 100;
 
 	public Perceptron(DatasetMatrices datasetMatrices) {
 		// Convert the data arrays to matrices
@@ -26,13 +27,10 @@ public class Perceptron {
 		N = datasetMatrices.getN();
 
 		m = designMatrix.getColumnDimension();
-		double[] initWeights = new double[m];
-		Arrays.fill(initWeights, 0);
-		// Initialize the weight vector to all zeros
-		weights = MatrixUtils.createRealVector(initWeights);
 	}
 
 	public void trainByPerceptronAlgorithm(double learningRate) {
+		initZeroWeights();
 		int currentEpoch = 0;
 		while(++currentEpoch <= MAX_EPOCHS) {
 			boolean madeMistake = false;
@@ -60,11 +58,15 @@ public class Perceptron {
 		trainByDualPerceptron((x, z) -> x.dotProduct(z));
 	}
 
-	public void trainByDualGaussianKernel() {
-
+	public void trainByDualGaussianKernel(double bandwidth) {
+		trainByDualPerceptron((x, z) -> {
+			RealVector xMinusZ = x.subtract(z);
+			return Math.exp(-bandwidth * xMinusZ.dotProduct(xMinusZ));
+		});
 	}
 
 	public void trainByDualPerceptron(BiFunction<RealVector, RealVector, Double> kernelFunction) {
+		initZeroWeights();
 		// Initialize our list of alphas, which represent the number of times we
 		// have made a mistake for each item in the training data
 		double[] initAlphas = new double[N];
