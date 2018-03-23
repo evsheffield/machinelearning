@@ -17,8 +17,16 @@ public class Perceptron {
 	private RealVector labelVector;
 	private int N;
 	private int m;
+	/** The bandwidth (gamma) used for the RBF kernel */
+	private double bandwidth;
 
 	private static final int MAX_EPOCHS = 100;
+
+	private BiFunction<RealVector, RealVector, Double> linearKernel = (x, z) -> x.dotProduct(z);
+	private BiFunction<RealVector, RealVector, Double> rbfKernel = (x, z) -> {
+		RealVector xMinusZ = x.subtract(z);
+		return Math.exp(-bandwidth * xMinusZ.dotProduct(xMinusZ));
+	};
 
 	public Perceptron(DatasetMatrices datasetMatrices) {
 		// Convert the data arrays to matrices
@@ -30,7 +38,11 @@ public class Perceptron {
 	}
 
 	public void trainByPerceptronAlgorithm(double learningRate) {
-		initZeroWeights();
+		// Initialize the weight vector to all zeros
+		double[] initWeights = new double[m];
+		Arrays.fill(initWeights, 0);
+		weights = MatrixUtils.createRealVector(initWeights);
+
 		int currentEpoch = 0;
 		while(++currentEpoch <= MAX_EPOCHS) {
 			boolean madeMistake = false;
@@ -55,23 +67,20 @@ public class Perceptron {
 	}
 
 	public void trainByDualLinearKernel() {
-		trainByDualPerceptron((x, z) -> x.dotProduct(z));
+		trainByDualPerceptron(linearKernel);
 	}
 
 	public void trainByDualGaussianKernel(double bandwidth) {
-		trainByDualPerceptron((x, z) -> {
-			RealVector xMinusZ = x.subtract(z);
-			return Math.exp(-bandwidth * xMinusZ.dotProduct(xMinusZ));
-		});
+		this.bandwidth = bandwidth;
+		trainByDualPerceptron(rbfKernel);
 	}
 
 	public void trainByDualPerceptron(BiFunction<RealVector, RealVector, Double> kernelFunction) {
-		initZeroWeights();
 		// Initialize our list of alphas, which represent the number of times we
 		// have made a mistake for each item in the training data
 		double[] initAlphas = new double[N];
 		Arrays.fill(initAlphas, 0);
-		RealVector alphas = MatrixUtils.createRealVector(initAlphas);
+		alphas = MatrixUtils.createRealVector(initAlphas);
 
 		int currentEpoch = 0;
 		while(++currentEpoch <= MAX_EPOCHS) {
@@ -100,21 +109,16 @@ public class Perceptron {
 				break;
 			}
 		}
-
-		// Set the weights from the alpha values
-		for(int i = 0; i < N; i++) {
-			weights = weights.add(designMatrix.getRowVector(i).mapMultiply(alphas.getEntry(i) * getLabel(labelVector, i)));
-		}
 	}
 
-	public BinaryAPRStatistics getPerformance(DatasetMatrices data) {
+	public BinaryAPRStatistics getPerformance(DatasetMatrices data, PerceptronTrainingType trainingType) {
 		RealMatrix sampleDesignMatrix = MatrixUtils.createRealMatrix(data.getDesignMatrix());
 		RealVector sampleLabelVector = MatrixUtils.createRealVector(data.getLabelVector());
 		int tp = 0, tn = 0, fp = 0, fn = 0;
 
 		for(int i = 0; i < data.getN(); i++) {
 			int label = getLabel(sampleLabelVector, i);
-			int prediction = getPrediction(sampleDesignMatrix.getRowVector(i));
+			int prediction = getPrediction(sampleDesignMatrix.getRowVector(i), trainingType);
 			if(label == 1) {
 				if(prediction == 1)
 					tp++;
@@ -135,8 +139,32 @@ public class Perceptron {
 		return new BinaryAPRStatistics(accuracy, precision, recall);
 	}
 
-	private int getPrediction(RealVector featureVector) {
-		return weights.dotProduct(featureVector) >= 0 ? 1 : -1;
+	private int getPrediction(RealVector featureVector, PerceptronTrainingType trainingType) {
+		switch(trainingType) {
+			case DualLinearKernel:
+				double sum = 0;
+				for(int i = 0; i < N; i++) {
+					double ai = alphas.getEntry(i);
+					double yi = getLabel(labelVector, i);
+					RealVector xi = designMatrix.getRowVector(i);
+					double kernelVal = linearKernel.apply(xi, featureVector);
+					sum += (ai * yi * kernelVal);
+				}
+				return sum >= 0 ? 1 : -1;
+			case DualGaussianKernel:
+				double sum1 = 0;
+				for(int i = 0; i < N; i++) {
+					double ai = alphas.getEntry(i);
+					double yi = getLabel(labelVector, i);
+					RealVector xi = designMatrix.getRowVector(i);
+					double kernelVal = rbfKernel.apply(xi, featureVector);
+					sum1 += (ai * yi * kernelVal);
+				}
+				return sum1 >= 0 ? 1 : -1;
+			case Perceptron:
+			default:
+				return weights.dotProduct(featureVector) >= 0 ? 1 : -1;
+		}
 	}
 
 	private int getLabel(RealVector labels, int i) {

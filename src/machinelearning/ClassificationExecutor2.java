@@ -1,33 +1,30 @@
 package machinelearning;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.knowm.xchart.CategoryChart;
-import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.style.Styler.LegendPosition;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.XYSeries.XYSeriesRenderStyle;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
-import machinelearning.classification.DocumentClassification;
-import machinelearning.classification.DocumentClassificationModelType;
 import machinelearning.classification.LogisticRegression;
 import machinelearning.classification.Perceptron;
 import machinelearning.classification.PerceptronTrainingType;
 import machinelearning.dataset.Dataset;
-import machinelearning.dataset.DocumentDataset;
 import machinelearning.dataset.Feature;
 import machinelearning.dataset.FeatureType;
 import machinelearning.dataset.TrainingValidationMatrixSet;
 import machinelearning.dataset.TrainingValidationSet;
-import machinelearning.validation.APRStatistics;
 import machinelearning.validation.BinaryAPRStatistics;
 import machinelearning.validation.KFoldCrossValidation;
-import machinelearning.validation.ScatterPlot;
 
 /**
  * The main class for testing out various classification models
@@ -47,7 +44,7 @@ public class ClassificationExecutor2 {
 		System.out.println("Problem 1 - Perceptron");
 		System.out.println("--------------------------------");
 
-		System.out.println("Perceptron Dataset");
+		System.out.println("\nPerceptron Dataset");
 		System.out.println("*******************\n");
 		Dataset perceptronDataset = new Dataset(
 				"data/perceptronData.csv",
@@ -57,7 +54,7 @@ public class ClassificationExecutor2 {
 
 		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
 
-		System.out.println("Spiral Dataset");
+		System.out.println("\nSpiral Dataset");
 		System.out.println("*******************\n");
 		Dataset spiralDataset = new Dataset(
 				"data/twoSpirals.csv",
@@ -65,11 +62,62 @@ public class ClassificationExecutor2 {
 				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
 		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
 
-//		System.out.print("Finding best gamma for Gaussian kernel... ");
-//		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
-//		System.out.println(bandwidth);
+		System.out.print("Finding best gamma for Gaussian kernel... ");
+		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
+		System.out.println(bandwidth);
 
-//		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualGaussianKernel});
+		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
+
+		// --------------------------------------------
+		// Problem 2 - Regularized Logistic Regression
+		// --------------------------------------------
+		System.out.println("--------------------------------------------");
+		System.out.println("Problem 2 - Regularized Logistic Regression");
+		System.out.println("--------------------------------------------");
+		Dataset spamDataset = new Dataset(
+				"data/spambase.csv",
+				generateContinuousFeatureList(57),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
+
+		System.out.println("\nTesting Spam Dataset");
+		System.out.println("*********************");
+		testLogisticRegression(spamCross,
+				0.002,
+				0.001,
+				new double[] {0, 1, 10, 100},
+				"Spam Dataset - Logistic Regression",
+				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+
+		Dataset breastCancerDataset = new Dataset(
+				"data/breastcancer.csv",
+				generateContinuousFeatureList(30),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
+
+		System.out.println("\nTesting Breast Cancer Dataset");
+		System.out.println("*********************************");
+		testLogisticRegression(bcCross,
+				0.002,
+				0.01,
+				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+				"Breast Cancer Dataset - Logistic Regression",
+				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+
+		Dataset diabetesDataset = new Dataset(
+				"data/diabetes.csv",
+				generateContinuousFeatureList(8),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation diabetesCross = new KFoldCrossValidation(10, diabetesDataset);
+
+		System.out.println("\nTesting Diabetes Dataset");
+		System.out.println("****************************");
+		testLogisticRegression(diabetesCross,
+				0.001,
+				0.001,
+				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+				"Diabetes Dataset - Logistic Regression",
+				"Diabetes Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 
 		System.out.println("Done!");
 	}
@@ -132,8 +180,8 @@ public class ClassificationExecutor2 {
 
 				}
 
-				BinaryAPRStatistics trainingStats = percy.getPerformance(fold.getTrainingSet());
-				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet());
+				BinaryAPRStatistics trainingStats = percy.getPerformance(fold.getTrainingSet(), trainingType);
+				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet(), trainingType);
 
 				ArrayList<DescriptiveStatistics> stats = allStats.get(i);
 				stats.get(0).addValue(trainingStats.getAccuracy());
@@ -188,7 +236,7 @@ public class ClassificationExecutor2 {
 				percy.trainByDualGaussianKernel(bandwidth);
 
 				// Evaluate performance
-				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet());
+				BinaryAPRStatistics testStats = percy.getPerformance(fold.getTestSet(), PerceptronTrainingType.DualGaussianKernel);
 				testAccuracyStats.addValue(testStats.getAccuracy());
 			}
 			double meanAccuracy = testAccuracyStats.getMean();
@@ -208,12 +256,13 @@ public class ClassificationExecutor2 {
 	 *
 	 * @param cross The set of K folds to run the cross validation for
 	 * @param learningRates The list of learning rates to run gradient descent with
-	 * @param tolerances The list of tolerance parameters to run gradient descent with
+	 * @param tolerance The tolerance parameter to run gradient descent with
+	 * @param lambdas The lambda parameters controlling regularization
 	 * @param plotTitle The title to use for the plot of gradient descent progress
 	 * @param plotDescription The description to use for the plot of gradient descent progress
 	 */
 	private static void testLogisticRegression(KFoldCrossValidation cross, double learningRate,
-			double[] tolerances, String plotTitle, String plotDescription) {
+			double tolerance, double[] lambdas, String plotTitle, String plotDescription) {
 		// Convert the folds to matrix form and z-score normalize the features
 		ArrayList<TrainingValidationMatrixSet> matrixFolds = new ArrayList<TrainingValidationMatrixSet>();
 		for(TrainingValidationSet fold : cross.getFolds()) {
@@ -222,10 +271,15 @@ public class ClassificationExecutor2 {
 			matrixFolds.add(newFold);
 		}
 
-		ArrayList<ArrayList<Double>> plotData = new ArrayList<ArrayList<Double>>();
 		ArrayList<String> seriesNames = new ArrayList<String>();
+		ArrayList<Double> xData = new ArrayList<Double>();
+		ArrayList<Double> trainingData = new ArrayList<Double>();
+		ArrayList<Double> trainingError = new ArrayList<Double>();
+		ArrayList<Double> testData = new ArrayList<Double>();
+		ArrayList<Double> testError = new ArrayList<Double>();
 
-		for(double tolerance : tolerances) {
+		for(double lambda : lambdas) {
+			xData.add(lambda);
 			seriesNames.add("Tolerance: " + tolerance);
 			DescriptiveStatistics trainingAccuracyStats = new DescriptiveStatistics();
 			DescriptiveStatistics testAccuracyStats = new DescriptiveStatistics();
@@ -235,14 +289,14 @@ public class ClassificationExecutor2 {
 			DescriptiveStatistics testPrecisionStats = new DescriptiveStatistics();
 
 			int foldNum = 0;
-			System.out.println("\nLearning Rate: " + learningRate + ", Tolerance: " + tolerance);
+			System.out.println("\nLearning Rate: " + learningRate + ", Tolerance: " + tolerance + ", Regularization: " + lambda);
 			System.out.println("---------------------------");
 			for(TrainingValidationMatrixSet fold : matrixFolds) {
 				foldNum++;
 
 				// Create a logistic regression model
 				LogisticRegression logReg = new LogisticRegression(fold.getTrainingSet());
-				logReg.trainByGradientDescent(learningRate, tolerance);
+				logReg.trainByGradientDescent(learningRate, tolerance, lambda);
 
 				// Evaluate the performance of the model
 				trainingAccuracyStats.addValue(logReg.getAccuracyPercentage(fold.getTrainingSet()));
@@ -251,43 +305,6 @@ public class ClassificationExecutor2 {
 				testRecallStats.addValue(logReg.getRecallPercentage(fold.getTestSet()));
 				trainingPrecisionStats.addValue(logReg.getPrecisionPercentage(fold.getTrainingSet()));
 				testPrecisionStats.addValue(logReg.getPrecisionPercentage(fold.getTestSet()));
-
-				// Gather data to plot comparisons of the progression of gradient descent
-				// with varying parameters
-				if(foldNum == cross.getK()) {
-					if(plotData.isEmpty()) {
-						for(int i = 0; i < logReg.getTrainingLosses().size(); i++) {
-							ArrayList<Double> row =  new ArrayList<Double>();
-							row.add((double)i);
-							row.add(logReg.getTrainingLosses().get(i));
-							plotData.add(row);
-						}
-					} else if(logReg.getTrainingLosses().size() > plotData.size()) {
-						for(int i = 0; i < logReg.getTrainingLosses().size(); i++) {
-							if(i < plotData.size() ) {
-								plotData.get(i).add(logReg.getTrainingLosses().get(i));
-							} else {
-								// Add a new row, pad with nulls as necessary to reach the row length
-								ArrayList<Double> row =  new ArrayList<Double>();
-								row.add((double)i);
-								for(int j = 1; j < plotData.get(0).size() - 1; j++) {
-									row.add(null);
-								}
-								row.add(logReg.getTrainingLosses().get(i));
-								plotData.add(row);
-							}
-
-						}
-					} else {
-						for(int i = 0; i < plotData.size(); i++) {
-							if(i < logReg.getTrainingLosses().size()) {
-								plotData.get(i).add(logReg.getTrainingLosses().get(i));
-							} else {
-								plotData.get(i).add(null);
-							}
-						}
-					}
-				}
 			}
 
 			// Print summary statistics about the model's performance
@@ -303,164 +320,30 @@ public class ClassificationExecutor2 {
 			System.out.println("Test Recall SD      : " + testRecallStats.getStandardDeviation());
 			System.out.println("Test Mean Precision : " + testPrecisionStats.getMean());
 			System.out.println("Test Precision SD   : " + testPrecisionStats.getStandardDeviation());
+
+			trainingData.add(trainingAccuracyStats.getMean());
+			trainingError.add(trainingAccuracyStats.getStandardDeviation());
+			testData.add(testAccuracyStats.getMean());
+			testError.add(testAccuracyStats.getStandardDeviation());
 		}
 
-		// Display a scatter plot of the progression of gradient descent for various hyperparameters
-		new ScatterPlot(plotTitle, plotDescription, plotData, seriesNames, "Iterations", "Training Loss").showInFrame();
-	}
-
-	/**
-	 * Tests the performance of document classifiers trained using
-	 * a multivariate and multinomial model.
-	 *
-	 * @param trainingData The data to train the model with
-	 * @param testData The data to evaluate the model against
-	 */
-	private static void testDocumentClassification(DocumentDataset trainingData, DocumentDataset testData, boolean testMapEstimates) {
-		int[] vocabSizes = new int[] {1000};
-
-		ArrayList<ArrayList<Double>> plotPoints = new ArrayList<ArrayList<Double>>();
-		ArrayList<ArrayList<Double>> precisionData = new ArrayList<ArrayList<Double>>();
-		ArrayList<ArrayList<Double>> recallData = new ArrayList<ArrayList<Double>>();
-
-		long operationStartTime;
-		for(int vocabSize : vocabSizes) {
-			System.out.println("\nVocabulary Size: " + (vocabSize == DocumentClassification.VOCAB_SIZE_ALL ? "All" : vocabSize));
-			System.out.println("========================");
-
-			// Train a multivariate model and a multinomial model
-			System.out.print("Training Bernoulli (MLE)... ");
-			operationStartTime = System.currentTimeMillis();
-			DocumentClassification bernoulli = new DocumentClassification(trainingData, vocabSize);
-			bernoulli.trainMultivariateBernoulliModel();
-			System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-
-			System.out.print("Training Multinomial (MLE)... ");
-			operationStartTime = System.currentTimeMillis();
-			DocumentClassification multinomial = new DocumentClassification(trainingData, vocabSize);
-			multinomial.trainMultinomialEventModel();
-			System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-
-			// Evaluate the performance of each
-			System.out.print("Testing Bernoulli (MLE)... ");
-			operationStartTime = System.currentTimeMillis();
-			APRStatistics bernStats = bernoulli.getClassifierPerformance(DocumentClassificationModelType.Bernoulli, testData);
-			System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-			System.out.print("Testing Multinomial (MLE)... ");
-			operationStartTime = System.currentTimeMillis();
-			APRStatistics multiStats = multinomial.getClassifierPerformance(DocumentClassificationModelType.Multinomial, testData);
-			System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-			if(testMapEstimates) {
-				System.out.print("Training Bernoulli (MAP)... ");
-				operationStartTime = System.currentTimeMillis();
-				bernoulli.trainMultivariateBernoulliModelMap(2, 2);
-				System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-
-
-				ArrayList<Integer> alphas = new ArrayList<Integer>(Collections.nCopies(bernoulli.getVocabularySize(), 2));
-				System.out.print("Training Multinomial (MAP)... ");
-				operationStartTime = System.currentTimeMillis();
-				multinomial.trainMultinomialEventModelMap(alphas);
-				System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-
-				System.out.print("Testing Bernoulli (MAP)... ");
-				operationStartTime = System.currentTimeMillis();
-				APRStatistics bernMapStats = bernoulli.getClassifierPerformance(DocumentClassificationModelType.Bernoulli, testData);
-				System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-				System.out.print("Testing Multinomial (MAP)... ");
-				operationStartTime = System.currentTimeMillis();
-				APRStatistics multiMapStats = multinomial.getClassifierPerformance(DocumentClassificationModelType.Multinomial, testData);
-				System.out.println("Done! (" + ((System.currentTimeMillis() - operationStartTime) / 1000.0) + "s)");
-
-				plotPoints.add(new ArrayList<Double>(
-						Arrays.asList((double)bernoulli.getVocabularySize(), bernStats.getAccuracy(), bernMapStats.getAccuracy(), multiStats.getAccuracy(), multiMapStats.getAccuracy())));
-
-				if(vocabSize == 1000) {
-					precisionData.add(bernStats.getPrecisions());
-					precisionData.add(bernMapStats.getPrecisions());
-					precisionData.add(multiStats.getPrecisions());
-					precisionData.add(multiMapStats.getPrecisions());
-					recallData.add(bernStats.getRecalls());
-					recallData.add(bernMapStats.getRecalls());
-					recallData.add(multiStats.getRecalls());
-					recallData.add(multiMapStats.getRecalls());
-				}
-			} else {
-				plotPoints.add(new ArrayList<Double>(
-						Arrays.asList((double)bernoulli.getVocabularySize(), bernStats.getAccuracy(), multiStats.getAccuracy())));
-
-				// Use a single a vocab size to generate the precision and recall charts
-				if(vocabSize == 1000) {
-					precisionData.add(bernStats.getPrecisions());
-					precisionData.add(multiStats.getPrecisions());
-					recallData.add(bernStats.getRecalls());
-					recallData.add(multiStats.getRecalls());
-				}
-			}
-		}
-
-		// Plot the accuracy vs vocabulary sizes for both models
-		ArrayList<String> seriesNames = !testMapEstimates
-				? new ArrayList<String>(Arrays.asList("Bernoulli", "Multinomial"))
-				: new ArrayList<String>(Arrays.asList("Bernoulli (MLE)", "Bernoulli (MAP)", "Multinomial (MLE)", "Multinomial (MAP)"));
-
-		new ScatterPlot("Document Classification Accuracies",
-				"Document Classification Accuracy vs. Vocabulary Size",
-				plotPoints,
-				seriesNames,
-				"Vocabulary Size",
-				"Accuracy %").showInFrame();
-
-		String[] barSeriesNames = !testMapEstimates
-				? new String[] {"Bernoulli", "Multinomial"}
-				: new String[] {"Bernoulli (MLE)", "Bernoulli (MAP)", "Multinomial (MLE)", "Multinomial (MAP)"};
-		CategoryChart precisionChart = getGroupedBarChart("Precision percentage for each class",
-				"Class Label",
-				"Precision %",
-				precisionData,
-				new ArrayList<Integer>(Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)),
-				barSeriesNames);
-		CategoryChart recallChart = getGroupedBarChart("Recall percentage for each class",
-				"Class Label",
-				"Recall %",
-				recallData,
-				new ArrayList<Integer>(Arrays.asList(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)),
-				barSeriesNames);
-
-		new SwingWrapper<CategoryChart>(precisionChart).displayChart();
-		new SwingWrapper<CategoryChart>(recallChart).displayChart();
-	}
-
-	/**
-	 * Creates a grouped bar chart with the given data
-	 *
-	 * @param chartTitle The title of the chart
-	 * @param xAxisLabel The x axis label
-	 * @param yAxisLabel The y axis label
-	 * @param data List of data series to populate the chart with
-	 * @param classLabels The class labels in the grouping
-	 * @param seriesNames Names of the various data series
-	 * @return A chart which can be rendered in a JFrame
-	 */
-	private static CategoryChart getGroupedBarChart(String chartTitle, String xAxisLabel, String yAxisLabel,
-			ArrayList<ArrayList<Double>> data, ArrayList<Integer> classLabels, String[] seriesNames) {
-		CategoryChart chart = new CategoryChartBuilder().width(1800).height(600)
-				.title(chartTitle).xAxisTitle(xAxisLabel).yAxisTitle(yAxisLabel).build();
-		chart.getStyler().setLegendPosition(LegendPosition.InsideNW);
-		chart.getStyler().setAvailableSpaceFill(.90);
-		Font font = new Font("Default", Font.PLAIN, 24);
+		// Create Chart
+	    XYChart chart = new XYChartBuilder().width(1200).height(800).title(plotDescription).xAxisTitle("Lambda").yAxisTitle("Mean Accuracy").build();
+	    chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter);
+	    Font font = new Font("Default", Font.PLAIN, 24);
 		chart.getStyler().setAxisTickLabelsFont(font);
 		chart.getStyler().setAxisTitleFont(font);
 		chart.getStyler().setChartTitleFont(font);
 		chart.getStyler().setLegendFont(font);
-		chart.getStyler().setAvailableSpaceFill(0.75);
 
-		int i = 0;
-		for(ArrayList<Double> dataSeries : data) {
-			chart.addSeries(seriesNames[i], classLabels, dataSeries);
-			i++;
-		}
+	    XYSeries trainingSeries = chart.addSeries("Training", xData, trainingData, trainingError);
+	    trainingSeries.setMarkerColor(Color.RED);
+	    trainingSeries.setMarker(SeriesMarkers.SQUARE);
 
-		return chart;
+	    XYSeries testSeries = chart.addSeries("Test", xData, testData, testError);
+	    testSeries.setMarkerColor(Color.BLUE);
+	    testSeries.setMarker(SeriesMarkers.SQUARE);
+
+	    new SwingWrapper<XYChart>(chart).displayChart();
 	}
 }

@@ -49,17 +49,18 @@ public class LogisticRegression {
 	 *
 	 * @param learningRate The learning rate applied to the update step
 	 * @param tolerance The minimum change in loss between iterations. If the change
-	 * in loss drops below this threshold between iterations, the method will
-	 * stop.
+	 * in loss drops below this threshold between iterations, the method will stop.
+	 * @param regularization The lambda value to apply to L2 regularization. A value of 0
+	 * is equivalent to no regularization.
 	 */
-	public void trainByGradientDescent(double learningRate, double tolerance) {
+	public void trainByGradientDescent(double learningRate, double tolerance, double regularization) {
 		int i = 0;
 		double previousLoss = getNegativeLogLikelihood();
 		double diffFromPreviousLoss = Double.POSITIVE_INFINITY;
 		trainingLosses.add(previousLoss);
 		while(i++ < MAX_ITERATIONS && diffFromPreviousLoss >= tolerance) {
 			// Calculate the gradient
-			RealVector gradient = getGradientVector();
+			RealVector gradient = getGradientVector(regularization);
 			// Update the weights
 			weights = weights.subtract(gradient.mapMultiply(learningRate));
 			// Update the change in loss
@@ -68,6 +69,18 @@ public class LogisticRegression {
 			previousLoss = loss;
 			trainingLosses.add(loss);
 		}
+	}
+
+	/**
+	 * Trains the logistic regression model by using gradient descent to estimate
+	 * the weights that minimize the negative log-likelihood function.
+	 *
+	 * @param learningRate The learning rate applied to the update step
+	 * @param tolerance The minimum change in loss between iterations. If the change
+	 * in loss drops below this threshold between iterations, the method will stop.
+	 */
+	public void trainByGradientDescent(double learningRate, double tolerance) {
+		trainByGradientDescent(learningRate, tolerance, 0);
 	}
 
 	/**
@@ -197,7 +210,7 @@ public class LogisticRegression {
 	 *
 	 * @return The gradient vector
 	 */
-	private RealVector getGradientVector() {
+	private RealVector getGradientVector(double lambda) {
 		// Construct "O" vector, which is a vector of the sigmoid function applied
 		// to the dot product of the weight vector with each input feature vector
 		// in the training set
@@ -207,6 +220,13 @@ public class LogisticRegression {
 		}
 		RealVector sigmoidVector = MatrixUtils.createRealVector(O);
 		RealMatrix oMinusY = MatrixUtils.createColumnRealMatrix((sigmoidVector.subtract(labelVector)).toArray());
-		return designMatrix.transpose().multiply(oMinusY).getColumnVector(0);
+		RealVector gradient = designMatrix.transpose().multiply(oMinusY).getColumnVector(0);
+
+		// Perform regularization - add lambda*w_i to each ith entry in the gradient, EXCEPT w0
+		// since we don't want to penalize the intercept
+		RealVector regularizationVector = weights.copy().mapMultiply(lambda);
+		regularizationVector.setEntry(0, 0);
+
+		return gradient.add(regularizationVector);
 	}
 }
