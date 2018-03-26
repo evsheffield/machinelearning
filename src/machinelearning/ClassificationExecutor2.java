@@ -545,7 +545,7 @@ public class ClassificationExecutor2 {
 		System.out.println("Test Precision SD   : " + rbfTestPrecision.getStandardDeviation());
 
 		// Draw the ROC curve
-	    XYChart chart = new XYChartBuilder().width(1200).height(800).title(plotTitle).xAxisTitle("True Positive Rate").yAxisTitle("False Positive Rate").build();
+	    XYChart chart = new XYChartBuilder().width(1200).height(800).title(plotTitle).xAxisTitle("False Positive Rate").yAxisTitle("True Positive Rate").build();
 	    chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter);
 	    Font font = new Font("Default", Font.PLAIN, 24);
 		chart.getStyler().setAxisTickLabelsFont(font);
