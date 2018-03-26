@@ -24,6 +24,7 @@ import machinelearning.classification.LogisticRegression;
 import machinelearning.classification.Perceptron;
 import machinelearning.classification.PerceptronTrainingType;
 import machinelearning.classification.SVM;
+import machinelearning.classification.SVMResult;
 import machinelearning.dataset.Dataset;
 import machinelearning.dataset.Feature;
 import machinelearning.dataset.FeatureType;
@@ -138,7 +139,7 @@ public class ClassificationExecutor2 {
 
 		System.out.println("\nTesting Breast Cancer Dataset");
 		System.out.println("*********************************");
-		testSvmGridSearch(bcCross, 5, -5, 10, -15, 5);
+		testSvmGridSearch(bcCross, 5, -5, 3, -5, 5, false, "Breast Cancer ROC Curve");
 
 		System.out.println("\nTesting Diabetes Dataset");
 		System.out.println("****************************");
@@ -371,7 +372,8 @@ public class ClassificationExecutor2 {
 	    new SwingWrapper<XYChart>(chart).displayChart();
 	}
 
-	private static void testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax) {
+	private static void testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
+			String plotTitle) {
 
 		// LIBSVM is too chatty - override the print function to do nothing
 		svm_print_interface printFunc = new svm_print_interface() {
@@ -388,6 +390,14 @@ public class ClassificationExecutor2 {
 		DescriptiveStatistics testPrecision = new DescriptiveStatistics();
 		DescriptiveStatistics trainingRecall = new DescriptiveStatistics();
 		DescriptiveStatistics testRecall = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTrainingAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTestAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTrainingPrecision = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTestPrecision = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTrainingRecall = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTestRecall = new DescriptiveStatistics();
+		ArrayList<SVMResult> allLinearResults = new ArrayList<SVMResult>();
+		ArrayList<SVMResult> allRbfResults = new ArrayList<SVMResult>();
 
 		int foldNum = 0;
 		for(TrainingValidationSet fold : cross.getFolds()) {
@@ -418,9 +428,14 @@ public class ClassificationExecutor2 {
 					svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
 
 					// Train a linear model
-					svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, c, 0);
-					BinaryAPRStatistics performance = SVM.getModelPerformance(linearModel, matrixSubFold.getTestSet());
-					accuracy.addValue(performance.getAccuracy());
+					svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, c, 0, maximizeAuc);
+					if(maximizeAuc) {
+						accuracy.addValue(SVM.calculateAuc(linearModel, matrixSubFold.getTestSet()));
+					} else {
+						BinaryAPRStatistics performance = SVM.getModelPerformance(linearModel, matrixSubFold.getTestSet());
+						accuracy.addValue(performance.getAccuracy());
+					}
+
 				}
 
 				if(accuracy.getMean() > bestLinearPerf) {
@@ -448,9 +463,13 @@ public class ClassificationExecutor2 {
 						svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
 
 						// Train a linear model
-						svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, c, gamma);
-						BinaryAPRStatistics performance = SVM.getModelPerformance(rbfModel, matrixSubFold.getTestSet());
-						accuracy.addValue(performance.getAccuracy());
+						svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, c, gamma, maximizeAuc);
+						if(maximizeAuc) {
+							accuracy.addValue(SVM.calculateAuc(rbfModel, matrixSubFold.getTestSet()));
+						} else {
+							BinaryAPRStatistics performance = SVM.getModelPerformance(rbfModel, matrixSubFold.getTestSet());
+							accuracy.addValue(performance.getAccuracy());
+						}
 					}
 
 					if(accuracy.getMean() > bestRbfPerf) {
@@ -464,14 +483,17 @@ public class ClassificationExecutor2 {
 
 			// Now we have selected the best parameter
 			System.out.println("\nLinear Kernel: C = " + linearBestC);
-			System.out.println("\nRBF Kernel: C = " + rbfBestC);
-			System.out.println("\nRBF Kernel: Gamma = " + bestGamma);
+			System.out.println("RBF Kernel: C = " + rbfBestC);
+			System.out.println("RBF Kernel: Gamma = " + bestGamma + "\n");
 
 			TrainingValidationMatrixSet foldMatrix = new TrainingValidationMatrixSet(fold, true);
 
 			// Build a model for this entire fold using the parameters we identified
 			svm_problem trainingProblem = SVM.createSvmProblem(foldMatrix.getTrainingSet());
-			svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, linearBestC, 0);
+			svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, linearBestC, 0, true);
+			svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, rbfBestC, bestGamma, true);
+			allLinearResults.addAll(SVM.getProbabilityPredictions(linearModel, foldMatrix.getTestSet()));
+			allRbfResults.addAll(SVM.getProbabilityPredictions(rbfModel, foldMatrix.getTestSet()));
 
 			// Evaluate training and testing performance
 			BinaryAPRStatistics trainingPerformance = SVM.getModelPerformance(linearModel, foldMatrix.getTrainingSet());
@@ -482,10 +504,20 @@ public class ClassificationExecutor2 {
 			testPrecision.addValue(testPerformance.getPrecision());
 			trainingRecall.addValue(trainingPerformance.getRecall());
 			testRecall.addValue(testPerformance.getRecall());
+
+			BinaryAPRStatistics trainingRbfPerformance = SVM.getModelPerformance(rbfModel, foldMatrix.getTrainingSet());
+			BinaryAPRStatistics testRbfPerformance = SVM.getModelPerformance(rbfModel, foldMatrix.getTestSet());
+			rbfTrainingAccuracy.addValue(trainingRbfPerformance.getAccuracy());
+			rbfTestAccuracy.addValue(testRbfPerformance.getAccuracy());
+			rbfTrainingPrecision.addValue(trainingRbfPerformance.getPrecision());
+			rbfTestPrecision.addValue(testRbfPerformance.getPrecision());
+			rbfTrainingRecall.addValue(trainingRbfPerformance.getRecall());
+			rbfTestRecall.addValue(testRbfPerformance.getRecall());
 		}
 
 		// Print summary statistics about the model's performance
-		System.out.println("\nTraining Mean Accuracy  : " + trainingAccuracy.getMean());
+		System.out.println("\n------------ Linear Kernel ------------");
+		System.out.println("Training Mean Accuracy  : " + trainingAccuracy.getMean());
 		System.out.println("Training Accuracy SD    : " + trainingAccuracy.getStandardDeviation());
 		System.out.println("Training Mean Recall    : " + trainingRecall.getMean());
 		System.out.println("Training Recall SD      : " + trainingRecall.getStandardDeviation());
@@ -497,5 +529,44 @@ public class ClassificationExecutor2 {
 		System.out.println("Test Recall SD      : " + testRecall.getStandardDeviation());
 		System.out.println("Test Mean Precision : " + testPrecision.getMean());
 		System.out.println("Test Precision SD   : " + testPrecision.getStandardDeviation());
+
+		System.out.println("\n------------ RBF Kernel ------------");
+		System.out.println("Training Mean Accuracy  : " + rbfTrainingAccuracy.getMean());
+		System.out.println("Training Accuracy SD    : " + rbfTrainingAccuracy.getStandardDeviation());
+		System.out.println("Training Mean Recall    : " + rbfTrainingRecall.getMean());
+		System.out.println("Training Recall SD      : " + rbfTrainingRecall.getStandardDeviation());
+		System.out.println("Training Mean Precision : " + rbfTrainingPrecision.getMean());
+		System.out.println("Training Precision SD   : " + rbfTrainingPrecision.getStandardDeviation());
+		System.out.println("\nTest Mean Accuracy  : " + rbfTestAccuracy.getMean());
+		System.out.println("Test Accuracy SD    : " + rbfTestAccuracy.getStandardDeviation());
+		System.out.println("Test Mean Recall    : " + rbfTestRecall.getMean());
+		System.out.println("Test Recall SD      : " + rbfTestRecall.getStandardDeviation());
+		System.out.println("Test Mean Precision : " + rbfTestPrecision.getMean());
+		System.out.println("Test Precision SD   : " + rbfTestPrecision.getStandardDeviation());
+
+		// Draw the ROC curve
+	    XYChart chart = new XYChartBuilder().width(1200).height(800).title(plotTitle).xAxisTitle("True Positive Rate").yAxisTitle("False Positive Rate").build();
+	    chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter);
+	    Font font = new Font("Default", Font.PLAIN, 24);
+		chart.getStyler().setAxisTickLabelsFont(font);
+		chart.getStyler().setAxisTitleFont(font);
+		chart.getStyler().setChartTitleFont(font);
+		chart.getStyler().setLegendFont(font);
+
+		double[][] linearData = SVM.getRocPoints(allLinearResults);
+	    XYSeries linearSeries = chart.addSeries("Linear", linearData[0], linearData[1]);
+	    linearSeries.setMarkerColor(Color.RED);
+	    linearSeries.setMarker(SeriesMarkers.SQUARE);
+
+	    double[][] rbfData = SVM.getRocPoints(allRbfResults);
+	    XYSeries rbfSeries = chart.addSeries("RBF", rbfData[0], rbfData[1]);
+	    rbfSeries.setMarkerColor(Color.BLUE);
+	    rbfSeries.setMarker(SeriesMarkers.SQUARE);
+
+	    XYSeries baselineSeries = chart.addSeries("Baseline", new double[] {0, 1}, new double[] {0, 1});
+	    baselineSeries.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+	    baselineSeries.setMarkerColor(Color.DARK_GRAY);
+
+	    new SwingWrapper<XYChart>(chart).displayChart();
 	}
 }
