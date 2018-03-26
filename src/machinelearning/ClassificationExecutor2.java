@@ -15,9 +15,15 @@ import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.XYSeries.XYSeriesRenderStyle;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 
+import libsvm.svm;
+import libsvm.svm_model;
+import libsvm.svm_print_interface;
+import libsvm.svm_problem;
+import machinelearning.classification.KernelType;
 import machinelearning.classification.LogisticRegression;
 import machinelearning.classification.Perceptron;
 import machinelearning.classification.PerceptronTrainingType;
+import machinelearning.classification.SVM;
 import machinelearning.dataset.Dataset;
 import machinelearning.dataset.Feature;
 import machinelearning.dataset.FeatureType;
@@ -40,84 +46,102 @@ public class ClassificationExecutor2 {
 		// --------------------------------
 		// Problem 1 - Perceptron
 		// --------------------------------
-		System.out.println("--------------------------------");
-		System.out.println("Problem 1 - Perceptron");
-		System.out.println("--------------------------------");
-
-		System.out.println("\nPerceptron Dataset");
-		System.out.println("*******************\n");
-		Dataset perceptronDataset = new Dataset(
-				"data/perceptronData.csv",
-				generateContinuousFeatureList(4),
-				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
-		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
-
-		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
-
-		System.out.println("\nSpiral Dataset");
-		System.out.println("*******************\n");
-		Dataset spiralDataset = new Dataset(
-				"data/twoSpirals.csv",
-				generateContinuousFeatureList(2),
-				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
-		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
-
-		System.out.print("Finding best gamma for Gaussian kernel... ");
-		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
-		System.out.println(bandwidth);
-
-		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
-
-		// --------------------------------------------
-		// Problem 2 - Regularized Logistic Regression
-		// --------------------------------------------
-		System.out.println("--------------------------------------------");
-		System.out.println("Problem 2 - Regularized Logistic Regression");
-		System.out.println("--------------------------------------------");
+//		System.out.println("--------------------------------");
+//		System.out.println("Problem 1 - Perceptron");
+//		System.out.println("--------------------------------");
+//
+//		System.out.println("\nPerceptron Dataset");
+//		System.out.println("*******************\n");
+//		Dataset perceptronDataset = new Dataset(
+//				"data/perceptronData.csv",
+//				generateContinuousFeatureList(4),
+//				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
+//		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
+//
+//		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
+//
+//		System.out.println("\nSpiral Dataset");
+//		System.out.println("*******************\n");
+//		Dataset spiralDataset = new Dataset(
+//				"data/twoSpirals.csv",
+//				generateContinuousFeatureList(2),
+//				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
+//		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
+//
+//		System.out.print("Finding best gamma for Gaussian kernel... ");
+//		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
+//		System.out.println(bandwidth);
+//
+//		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
+//
+//		// --------------------------------------------
+//		// Problem 2 - Regularized Logistic Regression
+//		// --------------------------------------------
+//		System.out.println("--------------------------------------------");
+//		System.out.println("Problem 2 - Regularized Logistic Regression");
+//		System.out.println("--------------------------------------------");
 		Dataset spamDataset = new Dataset(
 				"data/spambase.csv",
 				generateContinuousFeatureList(57),
 				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
 		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
-
-		System.out.println("\nTesting Spam Dataset");
-		System.out.println("*********************");
-		testLogisticRegression(spamCross,
-				0.002,
-				0.001,
-				new double[] {0, 1, 10, 100},
-				"Spam Dataset - Logistic Regression",
-				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
-
+//
+//		System.out.println("\nTesting Spam Dataset");
+//		System.out.println("*********************");
+//		testLogisticRegression(spamCross,
+//				0.002,
+//				0.001,
+//				new double[] {0, 1, 10, 100},
+//				"Spam Dataset - Logistic Regression",
+//				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+//
 		Dataset breastCancerDataset = new Dataset(
 				"data/breastcancer.csv",
 				generateContinuousFeatureList(30),
 				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
 		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
+//
+//		System.out.println("\nTesting Breast Cancer Dataset");
+//		System.out.println("*********************************");
+//		testLogisticRegression(bcCross,
+//				0.002,
+//				0.01,
+//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+//				"Breast Cancer Dataset - Logistic Regression",
+//				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+//
+//		Dataset diabetesDataset = new Dataset(
+//				"data/diabetes.csv",
+//				generateContinuousFeatureList(8),
+//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+//		KFoldCrossValidation diabetesCross = new KFoldCrossValidation(10, diabetesDataset);
+//
+//		System.out.println("\nTesting Diabetes Dataset");
+//		System.out.println("****************************");
+//		testLogisticRegression(diabetesCross,
+//				0.001,
+//				0.001,
+//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+//				"Diabetes Dataset - Logistic Regression",
+//				"Diabetes Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+
+		// --------------------------------------------
+		// Problem 3 - SVM Model Hyper-parameters
+		// --------------------------------------------
+		System.out.println("--------------------------------------------");
+		System.out.println("Problem 3 - SVM Model Hyper-parameters");
+		System.out.println("--------------------------------------------");
+
+		System.out.println("\nTesting Spam Dataset");
+		System.out.println("*********************");
+//		testSvmGridSearch(spamCross, 5, -5, 3, -15, 5);
 
 		System.out.println("\nTesting Breast Cancer Dataset");
 		System.out.println("*********************************");
-		testLogisticRegression(bcCross,
-				0.002,
-				0.01,
-				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
-				"Breast Cancer Dataset - Logistic Regression",
-				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
-
-		Dataset diabetesDataset = new Dataset(
-				"data/diabetes.csv",
-				generateContinuousFeatureList(8),
-				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-		KFoldCrossValidation diabetesCross = new KFoldCrossValidation(10, diabetesDataset);
+		testSvmGridSearch(bcCross, 5, -5, 10, -15, 5);
 
 		System.out.println("\nTesting Diabetes Dataset");
 		System.out.println("****************************");
-		testLogisticRegression(diabetesCross,
-				0.001,
-				0.001,
-				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
-				"Diabetes Dataset - Logistic Regression",
-				"Diabetes Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 
 		System.out.println("Done!");
 	}
@@ -345,5 +369,133 @@ public class ClassificationExecutor2 {
 	    testSeries.setMarker(SeriesMarkers.SQUARE);
 
 	    new SwingWrapper<XYChart>(chart).displayChart();
+	}
+
+	private static void testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax) {
+
+		// LIBSVM is too chatty - override the print function to do nothing
+		svm_print_interface printFunc = new svm_print_interface() {
+			@Override
+			public void print(String arg0) {
+				// Do nothing
+			}
+		};
+		svm.svm_set_print_string_function(printFunc);
+
+		DescriptiveStatistics trainingAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics testAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics trainingPrecision = new DescriptiveStatistics();
+		DescriptiveStatistics testPrecision = new DescriptiveStatistics();
+		DescriptiveStatistics trainingRecall = new DescriptiveStatistics();
+		DescriptiveStatistics testRecall = new DescriptiveStatistics();
+
+		int foldNum = 0;
+		for(TrainingValidationSet fold : cross.getFolds()) {
+			System.out.print("Fold " + ++foldNum);
+			fold.zScoreNormalizeContinuousFeatures();
+
+			// Break the folds down into m further folds
+			ArrayList<TrainingValidationSet> subFolds = fold.getTrainingSetFolds(m);
+			ArrayList<TrainingValidationMatrixSet> subFoldMatrices = new ArrayList<TrainingValidationMatrixSet>();
+			for(TrainingValidationSet subFold : subFolds) {
+				// TODO should we add a constant feature here??
+				subFoldMatrices.add(new TrainingValidationMatrixSet(subFold, true));
+			}
+
+			// Perform an inner cross-validation loop to select the best model hyper parameters
+			// for a linear kernel
+			double linearBestC = 0;
+			double bestLinearPerf = 0;
+			for(int cExp = cMin; cExp <= cMax; cExp++) {
+
+				double c = Math.pow(2, cExp);
+
+				DescriptiveStatistics accuracy = new DescriptiveStatistics();
+
+				for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
+					// Get a matrix representation of the subfold
+					// TODO can we not recalculate this too many times?
+					svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
+
+					// Train a linear model
+					svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, c, 0);
+					BinaryAPRStatistics performance = SVM.getModelPerformance(linearModel, matrixSubFold.getTestSet());
+					accuracy.addValue(performance.getAccuracy());
+				}
+
+				if(accuracy.getMean() > bestLinearPerf) {
+					linearBestC = c;
+					bestLinearPerf = accuracy.getMean();
+				}
+				System.out.print(".");
+			}
+
+			// Perform an inner cross-validation loop to select the best model hyper parameters
+			// for an RBF kernel
+			double rbfBestC = 0;
+			double bestGamma = 0;
+			double bestRbfPerf = 0;
+			for(int cExp = cMin; cExp <= cMax; cExp++) {
+				for(int gammaExp = gammaMin; gammaExp <= gammaMax; gammaExp++) {
+					double c = Math.pow(2, cExp);
+					double gamma = Math.pow(2, gammaExp);
+
+					DescriptiveStatistics accuracy = new DescriptiveStatistics();
+
+					for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
+						// Get a matrix representation of the subfold
+						// TODO can we not recalculate this too many times?
+						svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
+
+						// Train a linear model
+						svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, c, gamma);
+						BinaryAPRStatistics performance = SVM.getModelPerformance(rbfModel, matrixSubFold.getTestSet());
+						accuracy.addValue(performance.getAccuracy());
+					}
+
+					if(accuracy.getMean() > bestRbfPerf) {
+						rbfBestC = c;
+						bestGamma = gamma;
+						bestRbfPerf = accuracy.getMean();
+					}
+					System.out.print("*");
+				}
+			}
+
+			// Now we have selected the best parameter
+			System.out.println("\nLinear Kernel: C = " + linearBestC);
+			System.out.println("\nRBF Kernel: C = " + rbfBestC);
+			System.out.println("\nRBF Kernel: Gamma = " + bestGamma);
+
+			TrainingValidationMatrixSet foldMatrix = new TrainingValidationMatrixSet(fold, true);
+
+			// Build a model for this entire fold using the parameters we identified
+			svm_problem trainingProblem = SVM.createSvmProblem(foldMatrix.getTrainingSet());
+			svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, linearBestC, 0);
+
+			// Evaluate training and testing performance
+			BinaryAPRStatistics trainingPerformance = SVM.getModelPerformance(linearModel, foldMatrix.getTrainingSet());
+			BinaryAPRStatistics testPerformance = SVM.getModelPerformance(linearModel, foldMatrix.getTestSet());
+			trainingAccuracy.addValue(trainingPerformance.getAccuracy());
+			testAccuracy.addValue(testPerformance.getAccuracy());
+			trainingPrecision.addValue(trainingPerformance.getPrecision());
+			testPrecision.addValue(testPerformance.getPrecision());
+			trainingRecall.addValue(trainingPerformance.getRecall());
+			testRecall.addValue(testPerformance.getRecall());
+		}
+
+		// Print summary statistics about the model's performance
+		System.out.println("\nTraining Mean Accuracy  : " + trainingAccuracy.getMean());
+		System.out.println("Training Accuracy SD    : " + trainingAccuracy.getStandardDeviation());
+		System.out.println("Training Mean Recall    : " + trainingRecall.getMean());
+		System.out.println("Training Recall SD      : " + trainingRecall.getStandardDeviation());
+		System.out.println("Training Mean Precision : " + trainingPrecision.getMean());
+		System.out.println("Training Precision SD   : " + trainingPrecision.getStandardDeviation());
+		System.out.println("\nTest Mean Accuracy  : " + testAccuracy.getMean());
+		System.out.println("Test Accuracy SD    : " + testAccuracy.getStandardDeviation());
+		System.out.println("Test Mean Recall    : " + testRecall.getMean());
+		System.out.println("Test Recall SD      : " + testRecall.getStandardDeviation());
+		System.out.println("Test Mean Precision : " + testPrecision.getMean());
+		System.out.println("Test Precision SD   : " + testPrecision.getStandardDeviation());
 	}
 }

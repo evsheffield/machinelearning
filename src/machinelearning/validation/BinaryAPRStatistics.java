@@ -18,6 +18,20 @@ public class BinaryAPRStatistics {
 		this.recall = recall;
 	}
 
+	/**
+	 * Calculates accuracy, percentage, and recall, from classification results
+	 *
+	 * @param tp True positives
+	 * @param tn True negatives
+	 * @param fp False positives
+	 * @param fn False negatives
+	 */
+	public BinaryAPRStatistics(int tp, int tn, int fp, int fn) {
+		accuracy = (double)(tp + tn) / (tp + tn + fp + fn) * 100;
+		precision = (double)tp / (tp + fp) * 100;
+		recall = (double)tp / (tp + fn) * 100;
+	}
+
 	public double getAccuracy() {
 		return accuracy;
 	}

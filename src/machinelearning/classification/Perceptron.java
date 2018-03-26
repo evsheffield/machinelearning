@@ -132,11 +132,7 @@ public class Perceptron {
 			}
 		}
 
-		double accuracy = (double)(tp + tn) / (tp + tn + fp + fn) * 100;
-		double precision = (double)tp / (tp + fp) * 100;
-		double recall = (double)tp / (tp + fn) * 100;
-
-		return new BinaryAPRStatistics(accuracy, precision, recall);
+		return new BinaryAPRStatistics(tp, tn, fp, fn);
 	}
 
 	private int getPrediction(RealVector featureVector, PerceptronTrainingType trainingType) {

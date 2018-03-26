@@ -40,6 +40,44 @@ public class TrainingValidationSet {
 	}
 
 	/**
+	 * Returns a further partitioning of the training set into a nested
+	 * layer of training validation sets.
+	 *
+	 * @param m The number of folds to create from the training set
+	 * @return The nested set of m folds
+	 */
+	public ArrayList<TrainingValidationSet> getTrainingSetFolds(int m) {
+		// Partition all of the training data
+		ArrayList<ArrayList<Instance>> partitions = new ArrayList<ArrayList<Instance>>();
+		for(int i = 0; i < m; i++) {
+			partitions.add(new ArrayList<Instance>());
+		}
+		for(int i = 0; i < trainingSet.size(); i++) {
+			partitions.get(i % m).add(trainingSet.get(i).clone());
+		}
+
+		ArrayList<TrainingValidationSet> subsets = new ArrayList<TrainingValidationSet>();
+		for(int i = 0; i < m; i++) {
+			ArrayList<Instance> training = new ArrayList<Instance>();
+			for(int j = 0; j < m; j++) {
+				if(j != i) {
+					for(Instance in : partitions.get(j)) {
+						training.add(in.clone());
+					}
+				}
+			}
+			ArrayList<Instance> test = new ArrayList<Instance>();
+			for(Instance in : partitions.get(i)) {
+				test.add(in.clone());
+			}
+
+			subsets.add(new TrainingValidationSet(training, test, features));
+		}
+
+		return subsets;
+	}
+
+	/**
 	 * Normalizes all the continuous features of the training and test datasets to
 	 * their z-score.
 	 *
