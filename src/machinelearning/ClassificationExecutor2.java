@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -50,7 +51,7 @@ public class ClassificationExecutor2 {
 //		System.out.println("--------------------------------");
 //		System.out.println("Problem 1 - Perceptron");
 //		System.out.println("--------------------------------");
-//
+
 //		System.out.println("\nPerceptron Dataset");
 //		System.out.println("*******************\n");
 //		Dataset perceptronDataset = new Dataset(
@@ -60,7 +61,7 @@ public class ClassificationExecutor2 {
 //		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
 //
 //		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
-//
+
 //		System.out.println("\nSpiral Dataset");
 //		System.out.println("*******************\n");
 //		Dataset spiralDataset = new Dataset(
@@ -68,46 +69,46 @@ public class ClassificationExecutor2 {
 //				generateContinuousFeatureList(2),
 //				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
 //		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
-//
+
 //		System.out.print("Finding best gamma for Gaussian kernel... ");
 //		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
 //		System.out.println(bandwidth);
-//
+
 //		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
-//
-//		// --------------------------------------------
-//		// Problem 2 - Regularized Logistic Regression
-//		// --------------------------------------------
+
+		// --------------------------------------------
+		// Problem 2 - Regularized Logistic Regression
+		// --------------------------------------------
 //		System.out.println("--------------------------------------------");
 //		System.out.println("Problem 2 - Regularized Logistic Regression");
 //		System.out.println("--------------------------------------------");
-		Dataset spamDataset = new Dataset(
-				"data/spambase.csv",
-				generateContinuousFeatureList(57),
-				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
+//		Dataset spamDataset = new Dataset(
+//				"data/spambase.csv",
+//				generateContinuousFeatureList(57),
+//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+//		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
 //
 //		System.out.println("\nTesting Spam Dataset");
 //		System.out.println("*********************");
 //		testLogisticRegression(spamCross,
 //				0.002,
 //				0.001,
-//				new double[] {0, 1, 10, 100},
+//				new double[] {0, 1, 10, 50, 100},
 //				"Spam Dataset - Logistic Regression",
 //				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 //
-		Dataset breastCancerDataset = new Dataset(
-				"data/breastcancer.csv",
-				generateContinuousFeatureList(30),
-				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
+//		Dataset breastCancerDataset = new Dataset(
+//				"data/breastcancer.csv",
+//				generateContinuousFeatureList(30),
+//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+//		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
 //
 //		System.out.println("\nTesting Breast Cancer Dataset");
 //		System.out.println("*********************************");
 //		testLogisticRegression(bcCross,
 //				0.002,
 //				0.01,
-//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 450, 500},
 //				"Breast Cancer Dataset - Logistic Regression",
 //				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 //
@@ -129,20 +130,39 @@ public class ClassificationExecutor2 {
 		// --------------------------------------------
 		// Problem 3 - SVM Model Hyper-parameters
 		// --------------------------------------------
-		System.out.println("--------------------------------------------");
-		System.out.println("Problem 3 - SVM Model Hyper-parameters");
-		System.out.println("--------------------------------------------");
-
-		System.out.println("\nTesting Spam Dataset");
-		System.out.println("*********************");
+//		System.out.println("--------------------------------------------");
+//		System.out.println("Problem 3 - SVM Model Hyper-parameters");
+//		System.out.println("--------------------------------------------");
+//
+//		System.out.println("\nTesting Spam Dataset");
+//		System.out.println("*********************");
 //		testSvmGridSearch(spamCross, 5, -5, 3, -15, 5);
+//
+//		System.out.println("\nTesting Breast Cancer Dataset");
+//		System.out.println("*********************************");
+//		new SwingWrapper<XYChart>(testSvmGridSearch(bcCross, 5, -5, 3, -5, 5, false, "Breast Cancer ROC Curve")).displayChart();
+//
+//		System.out.println("\nTesting Diabetes Dataset");
+//		System.out.println("****************************");
 
-		System.out.println("\nTesting Breast Cancer Dataset");
-		System.out.println("*********************************");
-		testSvmGridSearch(bcCross, 5, -5, 3, -5, 5, false, "Breast Cancer ROC Curve");
-
-		System.out.println("\nTesting Diabetes Dataset");
-		System.out.println("****************************");
+		// --------------------------------------------
+		// Problem 4 - Multiclass SVM
+		// --------------------------------------------
+		System.out.println("--------------------------------------------");
+		System.out.println("Problem 4 - Multiclass SVM");
+		System.out.println("--------------------------------------------");
+		ArrayList<String> wineClasses = new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"}));
+		Dataset wineDataset = new Dataset(
+				"data/wine.data",
+				generateContinuousFeatureList(13),
+				new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"})));
+		List<XYChart> wineCharts = new ArrayList<XYChart>();
+		for(String wineClass : wineClasses) {
+			Dataset binaryWineDataset = wineDataset.getBinaryClassDatasetFromMulticlassDataset(wineClass);
+			KFoldCrossValidation wineCross = new KFoldCrossValidation(10, binaryWineDataset);
+			wineCharts.add(testSvmGridSearch(wineCross, 5, -5, 10, -15, 5, false, "Wine Dataset Class " + wineClass + " ROC Curve"));
+		}
+		new SwingWrapper<XYChart>(wineCharts).displayChartMatrix("Wine Dataset Classifiers");
 
 		System.out.println("Done!");
 	}
@@ -363,16 +383,18 @@ public class ClassificationExecutor2 {
 
 	    XYSeries trainingSeries = chart.addSeries("Training", xData, trainingData, trainingError);
 	    trainingSeries.setMarkerColor(Color.RED);
+	    trainingSeries.setLineColor(Color.RED);
 	    trainingSeries.setMarker(SeriesMarkers.SQUARE);
 
 	    XYSeries testSeries = chart.addSeries("Test", xData, testData, testError);
 	    testSeries.setMarkerColor(Color.BLUE);
-	    testSeries.setMarker(SeriesMarkers.SQUARE);
+	    testSeries.setLineColor(Color.BLUE);
+	    testSeries.setMarker(SeriesMarkers.CIRCLE);
 
 	    new SwingWrapper<XYChart>(chart).displayChart();
 	}
 
-	private static void testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
+	private static XYChart testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
 			String plotTitle) {
 
 		// LIBSVM is too chatty - override the print function to do nothing
@@ -567,6 +589,6 @@ public class ClassificationExecutor2 {
 	    baselineSeries.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
 	    baselineSeries.setMarkerColor(Color.DARK_GRAY);
 
-	    new SwingWrapper<XYChart>(chart).displayChart();
+	    return chart;
 	}
 }

@@ -158,6 +158,12 @@ public class SVM {
 		double[][] testDesignMatrix = testData.getDesignMatrix();
 		double[] probabilities = new double[2];
 
+		// LIBSVM will sometimes make the positive class the 0 index in probability arrays,
+		// other times it will be 1 index.
+		int[] classLabels = new int[2];
+		svm.svm_get_labels(model, classLabels);
+		int posClassIndex = classLabels[0] == 0 ? 1 : 0;
+
 		ArrayList<SVMResult> results = new ArrayList<SVMResult>();
 		double posCount = 0;
 		double negCount = 0;
@@ -177,7 +183,7 @@ public class SVM {
 
 			// Get the predictions
 			double predicted = svm.svm_predict_probability(model, nodes, probabilities);
-			results.add(new SVMResult(label, probabilities[1]));
+			results.add(new SVMResult(label, probabilities[posClassIndex]));
 		}
 		return results;
 	}

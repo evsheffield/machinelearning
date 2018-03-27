@@ -46,6 +46,10 @@ public class Instance {
 		featureValues.put(featureKey, featureValue);
 	}
 
+	public void setInstanceClass(double instanceClass) {
+		this.instanceClass = instanceClass;
+	}
+
 	@Override
 	/**
 	 * Clones an Instance, producing a new one with identical class and feature values but new references

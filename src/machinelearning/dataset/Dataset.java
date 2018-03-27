@@ -2,6 +2,7 @@ package machinelearning.dataset;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import machinelearning.dataset.utils.DatasetReader;
@@ -25,6 +26,13 @@ public class Dataset {
 		this.classValues = null;
 	}
 
+	public Dataset(ArrayList<Instance> instances, Feature[] features, ArrayList<String> classValues) {
+		super();
+		this.instances = instances;
+		this.features = features;
+		this.classValues = classValues;
+	}
+
 	/**
 	 * Constructs a dataset from a CSV file and an array of feature specifications.
 	 * Normalizes all continuous features in the dataset.
@@ -35,6 +43,7 @@ public class Dataset {
 	 */
 	public Dataset(String datasetFile, Feature[] features, ArrayList<String> classValues) {
 		this.features = features;
+		this.classValues = classValues;
 		try {
 			instances = DatasetReader.readDatasetFromFile(datasetFile, features, classValues);
 		} catch (IOException e) {
@@ -101,6 +110,24 @@ public class Dataset {
 		Feature[] newFeats = new Feature[newFeatures.size()];
 		newFeatures.toArray(newFeats);
 		features = newFeats;
+	}
+
+	/**
+	 * Returns a new dataset which is a copy of this one with class labels adjusted to
+	 * just the binary labels 0 and 1 based on what we designate as the positive class.
+	 *
+	 * @param positiveClass The class in the multi-class dataset to use as the positive (1) class.
+	 * @return The new dataset with adjusted class labels
+	 */
+	public Dataset getBinaryClassDatasetFromMulticlassDataset(String positiveClass) {
+		double positiveClassIx = classValues.indexOf(positiveClass);
+		ArrayList<Instance> newInstances = new ArrayList<Instance>();
+		for(Instance in : instances) {
+			Instance newInstance = in.clone();
+			newInstance.setInstanceClass(newInstance.getInstanceClass() == positiveClassIx ? 1.0 : 0.0);
+			newInstances.add(newInstance);
+		}
+		return new Dataset(newInstances, features, new ArrayList<String>(Arrays.asList("0", "1")));
 	}
 
 	public Feature[] getFeatures() {
