@@ -51,7 +51,7 @@ public class ClassificationExecutor2 {
 //		System.out.println("--------------------------------");
 //		System.out.println("Problem 1 - Perceptron");
 //		System.out.println("--------------------------------");
-
+//
 //		System.out.println("\nPerceptron Dataset");
 //		System.out.println("*******************\n");
 //		Dataset perceptronDataset = new Dataset(
@@ -61,7 +61,7 @@ public class ClassificationExecutor2 {
 //		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
 //
 //		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
-
+//
 //		System.out.println("\nSpiral Dataset");
 //		System.out.println("*******************\n");
 //		Dataset spiralDataset = new Dataset(
@@ -69,81 +69,99 @@ public class ClassificationExecutor2 {
 //				generateContinuousFeatureList(2),
 //				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
 //		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
-
+//
 //		System.out.print("Finding best gamma for Gaussian kernel... ");
-//		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
-//		System.out.println(bandwidth);
-
+//		double bandwidth = gridSearchBandwidth(0.01, 0.25, 0.01, spiralCross);
+//		System.out.println("Best bandwidth, first iteration: " + bandwidth);
+//		double nextBandwidth = gridSearchBandwidth(bandwidth - 0.01, bandwidth + 0.01, 0.001, spiralCross);
+//		System.out.println("Best bandwidth, second iteration: " + nextBandwidth);
+//
 //		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
 
 		// --------------------------------------------
 		// Problem 2 - Regularized Logistic Regression
 		// --------------------------------------------
-//		System.out.println("--------------------------------------------");
-//		System.out.println("Problem 2 - Regularized Logistic Regression");
-//		System.out.println("--------------------------------------------");
-//		Dataset spamDataset = new Dataset(
-//				"data/spambase.csv",
-//				generateContinuousFeatureList(57),
-//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-//		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
-//
-//		System.out.println("\nTesting Spam Dataset");
-//		System.out.println("*********************");
+		System.out.println("--------------------------------------------");
+		System.out.println("Problem 2 - Regularized Logistic Regression");
+		System.out.println("--------------------------------------------");
+		Dataset spamDataset = new Dataset(
+				"data/spambase.csv",
+				generateContinuousFeatureList(57),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation spamCross = new KFoldCrossValidation(10, spamDataset);
+
+		System.out.println("\nTesting Spam Dataset");
+		System.out.println("*********************");
 //		testLogisticRegression(spamCross,
 //				0.002,
 //				0.001,
-//				new double[] {0, 1, 10, 50, 100},
+//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400},
 //				"Spam Dataset - Logistic Regression",
 //				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
-//
-//		Dataset breastCancerDataset = new Dataset(
-//				"data/breastcancer.csv",
-//				generateContinuousFeatureList(30),
-//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-//		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
-//
-//		System.out.println("\nTesting Breast Cancer Dataset");
-//		System.out.println("*********************************");
-//		testLogisticRegression(bcCross,
-//				0.002,
-//				0.01,
-//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 450, 500},
-//				"Breast Cancer Dataset - Logistic Regression",
-//				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
-//
-//		Dataset diabetesDataset = new Dataset(
-//				"data/diabetes.csv",
-//				generateContinuousFeatureList(8),
-//				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
-//		KFoldCrossValidation diabetesCross = new KFoldCrossValidation(10, diabetesDataset);
-//
-//		System.out.println("\nTesting Diabetes Dataset");
-//		System.out.println("****************************");
-//		testLogisticRegression(diabetesCross,
-//				0.001,
-//				0.001,
-//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
-//				"Diabetes Dataset - Logistic Regression",
-//				"Diabetes Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+
+		Dataset breastCancerDataset = new Dataset(
+				"data/breastcancer.csv",
+				generateContinuousFeatureList(30),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation bcCross = new KFoldCrossValidation(10, breastCancerDataset);
+
+		System.out.println("\nTesting Breast Cancer Dataset");
+		System.out.println("*********************************");
+		testLogisticRegression(bcCross,
+				0.002,
+				0.01,
+				new double[] {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1},
+				"Breast Cancer Dataset - Logistic Regression",
+				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+
+		Dataset diabetesDataset = new Dataset(
+				"data/diabetes.csv",
+				generateContinuousFeatureList(8),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1"})));
+		KFoldCrossValidation diabetesCross = new KFoldCrossValidation(10, diabetesDataset);
+
+		System.out.println("\nTesting Diabetes Dataset");
+		System.out.println("****************************");
+		testLogisticRegression(diabetesCross,
+				0.001,
+				0.001,
+				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500},
+				"Diabetes Dataset - Logistic Regression",
+				"Diabetes Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 
 		// --------------------------------------------
 		// Problem 3 - SVM Model Hyper-parameters
 		// --------------------------------------------
-//		System.out.println("--------------------------------------------");
-//		System.out.println("Problem 3 - SVM Model Hyper-parameters");
-//		System.out.println("--------------------------------------------");
-//
-//		System.out.println("\nTesting Spam Dataset");
-//		System.out.println("*********************");
-//		testSvmGridSearch(spamCross, 5, -5, 3, -15, 5);
-//
-//		System.out.println("\nTesting Breast Cancer Dataset");
-//		System.out.println("*********************************");
-//		new SwingWrapper<XYChart>(testSvmGridSearch(bcCross, 5, -5, 3, -5, 5, false, "Breast Cancer ROC Curve")).displayChart();
-//
-//		System.out.println("\nTesting Diabetes Dataset");
-//		System.out.println("****************************");
+		System.out.println("--------------------------------------------");
+		System.out.println("Problem 3 - SVM Model Hyper-parameters");
+		System.out.println("--------------------------------------------");
+
+		System.out.println("\nTesting Spam Dataset");
+		System.out.println("*********************");
+		List<XYChart> spamCharts = new ArrayList<XYChart>();
+		System.out.println("-- Optimizing Accuracy --");
+		spamCharts.add(testSvmGridSearch(spamCross, 5, -2, 3, -8, -5, false, "Spam ROC Curve - Accuracy Optimized"));
+		System.out.println("-- Optimizing AUC --");
+		spamCharts.add(testSvmGridSearch(spamCross, 5, -2, 3, -8, -5, true, "Spam ROC Curve - AUC Optimized"));
+		new SwingWrapper<XYChart>(spamCharts).displayChartMatrix("Spam ROC Curves");
+
+		System.out.println("\nTesting Breast Cancer Dataset");
+		System.out.println("*********************************");
+		List<XYChart> bcCharts = new ArrayList<XYChart>();
+		System.out.println("-- Optimizing Accuracy --");
+		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 10, -15, 5, false, "Breast Cancer ROC Curve - Accuracy Optimized"));
+		System.out.println("-- Optimizing AUC --");
+		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 10, -15, 5, true, "Breast Cancer ROC Curve - AUC Optimized"));
+		new SwingWrapper<XYChart>(bcCharts).displayChartMatrix("Breast Cancer ROC Curves");
+
+		System.out.println("\nTesting Diabetes Dataset");
+		System.out.println("****************************");
+		List<XYChart> diabetesCharts = new ArrayList<XYChart>();
+		System.out.println("-- Optimizing Accuracy --");
+		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 10, -15, 5, false, "Diabetes ROC Curve - Accuracy Optimized"));
+		System.out.println("-- Optimizing AUC --");
+		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 10, -15, 5, true, "Diabetes ROC Curve - AUC Optimized"));
+		new SwingWrapper<XYChart>(diabetesCharts).displayChartMatrix("Diabetes ROC Curves");
 
 		// --------------------------------------------
 		// Problem 4 - Multiclass SVM
@@ -381,7 +399,7 @@ public class ClassificationExecutor2 {
 		chart.getStyler().setChartTitleFont(font);
 		chart.getStyler().setLegendFont(font);
 
-	    XYSeries trainingSeries = chart.addSeries("Training", xData, trainingData, trainingError);
+	    XYSeries trainingSeries = chart.addSeries("Training", xData, trainingData);
 	    trainingSeries.setMarkerColor(Color.RED);
 	    trainingSeries.setLineColor(Color.RED);
 	    trainingSeries.setMarker(SeriesMarkers.SQUARE);
