@@ -164,6 +164,6 @@ public class Perceptron {
 	}
 
 	private int getLabel(RealVector labels, int i) {
-		return labelVector.getEntry(i) == 0 ? -1 : 1;
+		return labels.getEntry(i) == 0 ? -1 : 1;
 	}
 }
