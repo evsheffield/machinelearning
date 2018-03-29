@@ -31,6 +31,7 @@ import machinelearning.dataset.Feature;
 import machinelearning.dataset.FeatureType;
 import machinelearning.dataset.TrainingValidationMatrixSet;
 import machinelearning.dataset.TrainingValidationSet;
+import machinelearning.validation.APRStatistics;
 import machinelearning.validation.BinaryAPRStatistics;
 import machinelearning.validation.KFoldCrossValidation;
 
@@ -48,35 +49,35 @@ public class ClassificationExecutor2 {
 		// --------------------------------
 		// Problem 1 - Perceptron
 		// --------------------------------
-//		System.out.println("--------------------------------");
-//		System.out.println("Problem 1 - Perceptron");
-//		System.out.println("--------------------------------");
-//
-//		System.out.println("\nPerceptron Dataset");
-//		System.out.println("*******************\n");
-//		Dataset perceptronDataset = new Dataset(
-//				"data/perceptronData.csv",
-//				generateContinuousFeatureList(4),
-//				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
-//		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
-//
-//		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
-//
-//		System.out.println("\nSpiral Dataset");
-//		System.out.println("*******************\n");
-//		Dataset spiralDataset = new Dataset(
-//				"data/twoSpirals.csv",
-//				generateContinuousFeatureList(2),
-//				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
-//		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
-//
-//		System.out.print("Finding best gamma for Gaussian kernel... ");
-//		double bandwidth = gridSearchBandwidth(0.01, 0.25, 0.01, spiralCross);
-//		System.out.println("Best bandwidth, first iteration: " + bandwidth);
-//		double nextBandwidth = gridSearchBandwidth(bandwidth - 0.01, bandwidth + 0.01, 0.001, spiralCross);
-//		System.out.println("Best bandwidth, second iteration: " + nextBandwidth);
-//
-//		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
+		System.out.println("--------------------------------");
+		System.out.println("Problem 1 - Perceptron");
+		System.out.println("--------------------------------");
+
+		System.out.println("\nPerceptron Dataset");
+		System.out.println("*******************\n");
+		Dataset perceptronDataset = new Dataset(
+				"data/perceptronData.csv",
+				generateContinuousFeatureList(4),
+				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
+		KFoldCrossValidation perceptronCross = new KFoldCrossValidation(10, perceptronDataset);
+
+		testPerceptron(perceptronCross, new PerceptronTrainingType[] {PerceptronTrainingType.Perceptron, PerceptronTrainingType.DualLinearKernel});
+
+		System.out.println("\nSpiral Dataset");
+		System.out.println("*******************\n");
+		Dataset spiralDataset = new Dataset(
+				"data/twoSpirals.csv",
+				generateContinuousFeatureList(2),
+				new ArrayList<String>(Arrays.asList(new String[] {"-1", "1"})));
+		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
+
+		System.out.print("Finding best gamma for Gaussian kernel... ");
+		double bandwidth = gridSearchBandwidth(0.01, 0.25, 0.01, spiralCross);
+		System.out.println("Best bandwidth, first iteration: " + bandwidth);
+		double nextBandwidth = gridSearchBandwidth(bandwidth - 0.01, bandwidth + 0.01, 0.001, spiralCross);
+		System.out.println("Best bandwidth, second iteration: " + nextBandwidth);
+
+		testPerceptron(spiralCross, new PerceptronTrainingType[] {PerceptronTrainingType.DualLinearKernel, PerceptronTrainingType.DualGaussianKernel});
 
 		// --------------------------------------------
 		// Problem 2 - Regularized Logistic Regression
@@ -92,12 +93,12 @@ public class ClassificationExecutor2 {
 
 		System.out.println("\nTesting Spam Dataset");
 		System.out.println("*********************");
-//		testLogisticRegression(spamCross,
-//				0.002,
-//				0.001,
-//				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400},
-//				"Spam Dataset - Logistic Regression",
-//				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
+		testLogisticRegression(spamCross,
+				0.002,
+				0.001,
+				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400},
+				"Spam Dataset - Logistic Regression",
+				"Spam Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 
 		Dataset breastCancerDataset = new Dataset(
 				"data/breastcancer.csv",
@@ -174,13 +175,8 @@ public class ClassificationExecutor2 {
 				"data/wine.data",
 				generateContinuousFeatureList(13),
 				new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"})));
-		List<XYChart> wineCharts = new ArrayList<XYChart>();
-		for(String wineClass : wineClasses) {
-			Dataset binaryWineDataset = wineDataset.getBinaryClassDatasetFromMulticlassDataset(wineClass);
-			KFoldCrossValidation wineCross = new KFoldCrossValidation(10, binaryWineDataset);
-			wineCharts.add(testSvmGridSearch(wineCross, 5, -5, 10, -15, 5, false, "Wine Dataset Class " + wineClass + " ROC Curve"));
-		}
-		new SwingWrapper<XYChart>(wineCharts).displayChartMatrix("Wine Dataset Classifiers");
+		KFoldCrossValidation wineCross = new KFoldCrossValidation(10, wineDataset);
+		testSvmGridSearchMulticlass(wineCross, 3, 5, -5, 10, -15, 5, false, "Wine Dataset");
 
 		System.out.println("Done!");
 	}
@@ -608,5 +604,255 @@ public class ClassificationExecutor2 {
 	    baselineSeries.setMarkerColor(Color.DARK_GRAY);
 
 	    return chart;
+	}
+
+	private static void testSvmGridSearchMulticlass(KFoldCrossValidation cross, int nrClasses, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
+			String plotTitle) {
+
+		// LIBSVM is too chatty - override the print function to do nothing
+		svm_print_interface printFunc = new svm_print_interface() {
+			@Override
+			public void print(String arg0) {
+				// Do nothing
+			}
+		};
+		svm.svm_set_print_string_function(printFunc);
+
+		ArrayList<APRStatistics> linearTrainingPerformances = new ArrayList<APRStatistics>();
+		ArrayList<APRStatistics> linearTestPerformances = new ArrayList<APRStatistics>();
+		ArrayList<APRStatistics> rbfTrainingPerformances = new ArrayList<APRStatistics>();
+		ArrayList<APRStatistics> rbfTestPerformances = new ArrayList<APRStatistics>();
+
+		ArrayList<ArrayList<SVMResult>> allLinearResults = new ArrayList<ArrayList<SVMResult>>();
+		ArrayList<ArrayList<SVMResult>> allRbfResults = new ArrayList<ArrayList<SVMResult>>();
+		for(int i = 0; i < nrClasses; i++) {
+			allLinearResults.add(new ArrayList<SVMResult>());
+			allRbfResults.add(new ArrayList<SVMResult>());
+		}
+
+		int foldNum = 0;
+		for(TrainingValidationSet fold : cross.getFolds()) {
+			System.out.println("Fold " + ++foldNum);
+			System.out.println("---------------");
+			fold.zScoreNormalizeContinuousFeatures();
+
+			// Prepare the data for entire fold
+			TrainingValidationMatrixSet foldMatrix = new TrainingValidationMatrixSet(fold, true);
+
+			// Break the folds down into m further folds
+			ArrayList<TrainingValidationSet> subFolds = fold.getTrainingSetFolds(m);
+			ArrayList<TrainingValidationMatrixSet> subFoldMatrices = new ArrayList<TrainingValidationMatrixSet>();
+			for(TrainingValidationSet subFold : subFolds) {
+				subFoldMatrices.add(new TrainingValidationMatrixSet(subFold, true));
+			}
+
+			ArrayList<svm_model> linearClassKernels = new ArrayList<svm_model>();
+			ArrayList<svm_model> rbfClassKernels = new ArrayList<svm_model>();
+			// Iterate over each of the classes and build a model for each of them
+			for(int positiveClass = 0; positiveClass < nrClasses; positiveClass++) {
+				System.out.println("Finding hyperparameters for positive class " + positiveClass);
+
+				// Perform an inner cross-validation loop to select the best model hyper parameters
+				// for a linear kernel
+				double linearBestC = 0;
+				double bestLinearPerf = 0;
+				for(int cExp = cMin; cExp <= cMax; cExp++) {
+
+					double c = Math.pow(2, cExp);
+
+					DescriptiveStatistics accuracy = new DescriptiveStatistics();
+
+					for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
+						// Get a matrix representation of the subfold
+						svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet(), positiveClass);
+
+						// Train a linear model
+						svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, c, 0, maximizeAuc);
+						if(maximizeAuc) {
+							accuracy.addValue(SVM.calculateAuc(linearModel, matrixSubFold.getTestSet(), positiveClass));
+						} else {
+							BinaryAPRStatistics performance = SVM.getModelPerformance(linearModel, matrixSubFold.getTestSet(), positiveClass);
+							accuracy.addValue(performance.getAccuracy());
+						}
+
+					}
+
+					if(accuracy.getMean() > bestLinearPerf) {
+						linearBestC = c;
+						bestLinearPerf = accuracy.getMean();
+					}
+					System.out.print(".");
+				}
+
+				// Perform an inner cross-validation loop to select the best model hyper parameters
+				// for an RBF kernel
+				double rbfBestC = 0;
+				double bestGamma = 0;
+				double bestRbfPerf = 0;
+				for(int cExp = cMin; cExp <= cMax; cExp++) {
+					for(int gammaExp = gammaMin; gammaExp <= gammaMax; gammaExp++) {
+						double c = Math.pow(2, cExp);
+						double gamma = Math.pow(2, gammaExp);
+
+						DescriptiveStatistics accuracy = new DescriptiveStatistics();
+
+						for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
+							// Get a matrix representation of the subfold
+							svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet(), positiveClass);
+
+							// Train a linear model
+							svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, c, gamma, maximizeAuc);
+							if(maximizeAuc) {
+								accuracy.addValue(SVM.calculateAuc(rbfModel, matrixSubFold.getTestSet(), positiveClass));
+							} else {
+								BinaryAPRStatistics performance = SVM.getModelPerformance(rbfModel, matrixSubFold.getTestSet(), positiveClass);
+								accuracy.addValue(performance.getAccuracy());
+							}
+						}
+
+						if(accuracy.getMean() > bestRbfPerf) {
+							rbfBestC = c;
+							bestGamma = gamma;
+							bestRbfPerf = accuracy.getMean();
+						}
+						System.out.print("*");
+					}
+				}
+
+				// Now we have selected the best parameters. Train models using these hyperparameters and add them to our set
+				System.out.println("\nLinear Kernel: C = " + linearBestC);
+				System.out.println("RBF Kernel: C = " + rbfBestC);
+				System.out.println("RBF Kernel: Gamma = " + bestGamma + "\n");
+				svm_problem trainingProblem = SVM.createSvmProblem(foldMatrix.getTrainingSet(), positiveClass);
+				svm_model linearModel = SVM.trainModel(trainingProblem, KernelType.Linear, linearBestC, 0, true);
+				svm_model rbfModel = SVM.trainModel(trainingProblem, KernelType.RBF, rbfBestC, bestGamma, true);
+				linearClassKernels.add(linearModel);
+				rbfClassKernels.add(rbfModel);
+				allLinearResults.get(positiveClass).addAll(SVM.getProbabilityPredictions(linearModel, foldMatrix.getTestSet(), positiveClass));
+				allRbfResults.get(positiveClass).addAll(SVM.getProbabilityPredictions(rbfModel, foldMatrix.getTestSet(), positiveClass));
+			}
+
+			// We have now accumulated models for each class trained with the best hyper-parameters. We will now collect
+			// performance results based on these models.
+			linearTrainingPerformances.add(SVM.getMulticlassPerformance(linearClassKernels, foldMatrix.getTrainingSet()));
+			linearTestPerformances.add(SVM.getMulticlassPerformance(linearClassKernels, foldMatrix.getTestSet()));
+			rbfTrainingPerformances.add(SVM.getMulticlassPerformance(rbfClassKernels, foldMatrix.getTrainingSet()));
+			rbfTestPerformances.add(SVM.getMulticlassPerformance(rbfClassKernels, foldMatrix.getTestSet()));
+		}
+
+		// Get summary statistics and ROC curves for each class
+		DescriptiveStatistics trainingAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics testAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTrainingAccuracy = new DescriptiveStatistics();
+		DescriptiveStatistics rbfTestAccuracy = new DescriptiveStatistics();
+
+		ArrayList<DescriptiveStatistics> trainingPrecision = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> testPrecision = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> trainingRecall = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> testRecall = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> rbfTrainingPrecision = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> rbfTestPrecision = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> rbfTrainingRecall = new ArrayList<DescriptiveStatistics>();
+		ArrayList<DescriptiveStatistics> rbfTestRecall = new ArrayList<DescriptiveStatistics>();
+		for(int classLabel = 0; classLabel < nrClasses; classLabel++) {
+			trainingPrecision.add(new DescriptiveStatistics());
+			testPrecision.add(new DescriptiveStatistics());
+			trainingRecall.add(new DescriptiveStatistics());
+			testRecall.add(new DescriptiveStatistics());
+			rbfTrainingPrecision.add(new DescriptiveStatistics());
+			rbfTestPrecision.add(new DescriptiveStatistics());
+			rbfTrainingRecall.add(new DescriptiveStatistics());
+			rbfTestRecall.add(new DescriptiveStatistics());
+		}
+
+		for(APRStatistics stats : linearTrainingPerformances) {
+			trainingAccuracy.addValue(stats.getAccuracy());
+			for(int i = 0; i < nrClasses; i++) {
+				trainingPrecision.get(i).addValue(stats.getPrecisions().get(i));
+				trainingRecall.get(i).addValue(stats.getRecalls().get(i));
+			}
+		}
+		for(APRStatistics stats : linearTestPerformances) {
+			testAccuracy.addValue(stats.getAccuracy());
+			for(int i = 0; i < nrClasses; i++) {
+				testPrecision.get(i).addValue(stats.getPrecisions().get(i));
+				testRecall.get(i).addValue(stats.getRecalls().get(i));
+			}
+		}
+		for(APRStatistics stats : rbfTrainingPerformances) {
+			rbfTrainingAccuracy.addValue(stats.getAccuracy());
+			for(int i = 0; i < nrClasses; i++) {
+				rbfTrainingPrecision.get(i).addValue(stats.getPrecisions().get(i));
+				rbfTrainingRecall.get(i).addValue(stats.getRecalls().get(i));
+			}
+		}
+		for(APRStatistics stats : rbfTestPerformances) {
+			rbfTestAccuracy.addValue(stats.getAccuracy());
+			for(int i = 0; i < nrClasses; i++) {
+				rbfTestPrecision.get(i).addValue(stats.getPrecisions().get(i));
+				rbfTestRecall.get(i).addValue(stats.getRecalls().get(i));
+			}
+		}
+
+		for(int classLabel = 0; classLabel < nrClasses; classLabel++) {
+			System.out.println("======= Class " + classLabel + " Results =========");
+			System.out.println("\n------------ Linear Kernel ------------");
+			System.out.println("Training Mean Accuracy  : " + trainingAccuracy.getMean());
+			System.out.println("Training Accuracy SD    : " + trainingAccuracy.getStandardDeviation());
+			System.out.println("Training Mean Recall    : " + trainingRecall.get(classLabel).getMean());
+			System.out.println("Training Recall SD      : " + trainingRecall.get(classLabel).getStandardDeviation());
+			System.out.println("Training Mean Precision : " + trainingPrecision.get(classLabel).getMean());
+			System.out.println("Training Precision SD   : " + trainingPrecision.get(classLabel).getStandardDeviation());
+			System.out.println("\nTest Mean Accuracy  : " + testAccuracy.getMean());
+			System.out.println("Test Accuracy SD    : " + testAccuracy.getStandardDeviation());
+			System.out.println("Test Mean Recall    : " + testRecall.get(classLabel).getMean());
+			System.out.println("Test Recall SD      : " + testRecall.get(classLabel).getStandardDeviation());
+			System.out.println("Test Mean Precision : " + testPrecision.get(classLabel).getMean());
+			System.out.println("Test Precision SD   : " + testPrecision.get(classLabel).getStandardDeviation());
+
+			System.out.println("\n------------ RBF Kernel ------------");
+			System.out.println("Training Mean Accuracy  : " + rbfTrainingAccuracy.getMean());
+			System.out.println("Training Accuracy SD    : " + rbfTrainingAccuracy.getStandardDeviation());
+			System.out.println("Training Mean Recall    : " + rbfTrainingRecall.get(classLabel).getMean());
+			System.out.println("Training Recall SD      : " + rbfTrainingRecall.get(classLabel).getStandardDeviation());
+			System.out.println("Training Mean Precision : " + rbfTrainingPrecision.get(classLabel).getMean());
+			System.out.println("Training Precision SD   : " + rbfTrainingPrecision.get(classLabel).getStandardDeviation());
+			System.out.println("\nTest Mean Accuracy  : " + rbfTestAccuracy.getMean());
+			System.out.println("Test Accuracy SD    : " + rbfTestAccuracy.getStandardDeviation());
+			System.out.println("Test Mean Recall    : " + rbfTestRecall.get(classLabel).getMean());
+			System.out.println("Test Recall SD      : " + rbfTestRecall.get(classLabel).getStandardDeviation());
+			System.out.println("Test Mean Precision : " + rbfTestPrecision.get(classLabel).getMean());
+			System.out.println("Test Precision SD   : " + rbfTestPrecision.get(classLabel).getStandardDeviation());
+		}
+
+		// Draw the ROC Curves for all classes
+		List<XYChart> charts = new ArrayList<XYChart>();
+		for(int classLabel = 0; classLabel < nrClasses; classLabel++) {
+			XYChart chart = new XYChartBuilder().width(1200).height(800).title(plotTitle + " - Class " + classLabel).xAxisTitle("False Positive Rate").yAxisTitle("True Positive Rate").build();
+		    chart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter);
+		    Font font = new Font("Default", Font.PLAIN, 24);
+			chart.getStyler().setAxisTickLabelsFont(font);
+			chart.getStyler().setAxisTitleFont(font);
+			chart.getStyler().setChartTitleFont(font);
+			chart.getStyler().setLegendFont(font);
+
+			double[][] linearData = SVM.getRocPoints(allLinearResults.get(classLabel));
+		    XYSeries linearSeries = chart.addSeries("Linear", linearData[0], linearData[1]);
+		    linearSeries.setMarkerColor(Color.RED);
+		    linearSeries.setMarker(SeriesMarkers.SQUARE);
+
+		    double[][] rbfData = SVM.getRocPoints(allRbfResults.get(classLabel));
+		    XYSeries rbfSeries = chart.addSeries("RBF", rbfData[0], rbfData[1]);
+		    rbfSeries.setMarkerColor(Color.BLUE);
+		    rbfSeries.setMarker(SeriesMarkers.SQUARE);
+
+		    XYSeries baselineSeries = chart.addSeries("Baseline", new double[] {0, 1}, new double[] {0, 1});
+		    baselineSeries.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+		    baselineSeries.setMarkerColor(Color.DARK_GRAY);
+
+		    charts.add(chart);
+		}
+
+		new SwingWrapper<XYChart>(charts).displayChartMatrix("Classifier ROC Curves");
 	}
 }

@@ -9,6 +9,7 @@ import libsvm.svm_node;
 import libsvm.svm_parameter;
 import libsvm.svm_problem;
 import machinelearning.dataset.DatasetMatrices;
+import machinelearning.validation.APRStatistics;
 import machinelearning.validation.BinaryAPRStatistics;
 
 /**
@@ -19,14 +20,18 @@ import machinelearning.validation.BinaryAPRStatistics;
  */
 public class SVM {
 
-	public static svm_problem createSvmProblem(DatasetMatrices trainingData) {
+	public static svm_problem createSvmProblem(DatasetMatrices trainingData, double positiveClass) {
 		svm_problem trainingProblem = new svm_problem();
 		// Components of svm problem:
 		// l - Number of training instances
 		// y[] - Label vector
 		// x[][] - design matrix of svm_nodes
 		trainingProblem.l = trainingData.getN();
-		trainingProblem.y = trainingData.getLabelVector();
+		trainingProblem.y = trainingData.getLabelVector().clone();
+		for(int i = 0; i < trainingProblem.y.length; i++) {
+			double label = (trainingProblem.y[i] == positiveClass ? 1.0 : 0.0);
+			trainingProblem.y[i] = label;
+		}
 
 		double[][] designMatrix = trainingData.getDesignMatrix();
 		svm_node[][] nodes = new svm_node[trainingData.getN()][trainingData.getM()];
@@ -41,6 +46,9 @@ public class SVM {
 		trainingProblem.x = nodes;
 
 		return trainingProblem;
+	}
+	public static svm_problem createSvmProblem(DatasetMatrices trainingData) {
+		return createSvmProblem(trainingData, 1.0);
 	}
 
 	public static svm_model trainModel(svm_problem trainingProblem, KernelType kernel, double c, double gamma, boolean includeProb) {
@@ -67,13 +75,13 @@ public class SVM {
 		return trainModel(trainingProblem, kernel, c, gamma, false);
 	}
 
-	public static BinaryAPRStatistics getModelPerformance(svm_model model, DatasetMatrices testData) {
+	public static BinaryAPRStatistics getModelPerformance(svm_model model, DatasetMatrices testData, double positiveClass) {
 		double[] testLabels = testData.getLabelVector();
 		double[][] testDesignMatrix = testData.getDesignMatrix();
 
 		int tp = 0, tn = 0, fp = 0, fn = 0;
 		for(int i = 0; i < testData.getN(); i++) {
-			double label = testLabels[i];
+			double label = testLabels[i] == positiveClass ? 1 : 0;
 			svm_node[] nodes = new svm_node[testData.getM()];
 			for(int j = 0; j < testData.getM(); j++) {
 				svm_node node = new svm_node();
@@ -100,13 +108,12 @@ public class SVM {
 
 		return new BinaryAPRStatistics(tp, tn, fp, fn);
 	}
+	public static BinaryAPRStatistics getModelPerformance(svm_model model, DatasetMatrices testData) {
+		return getModelPerformance(model, testData, 1.0);
+	}
 
-	public static double calculateAuc(svm_model model, DatasetMatrices testData) {
-//		double[] testLabels = testData.getLabelVector();
-//		double[][] testDesignMatrix = testData.getDesignMatrix();
-//		double[] probabilities = new double[2];
-
-		ArrayList<SVMResult> results = getProbabilityPredictions(model, testData);
+	public static double calculateAuc(svm_model model, DatasetMatrices testData, double positiveClass) {
+		ArrayList<SVMResult> results = getProbabilityPredictions(model, testData, positiveClass);
 		double posCount = 0;
 		double negCount = 0;
 		// TODO try to obtain this while doing the predictions
@@ -116,24 +123,6 @@ public class SVM {
 			else
 				posCount++;
 		}
-//		for(int i = 0; i < testData.getN(); i++) {
-//			double label = testLabels[i];
-//			if(label == 0)
-//				negCount++;
-//			else
-//				posCount++;
-//			svm_node[] nodes = new svm_node[testData.getM()];
-//			for(int j = 0; j < testData.getM(); j++) {
-//				svm_node node = new svm_node();
-//				node.index = j + 1;
-//				node.value = testDesignMatrix[i][j];
-//				nodes[j] = node;
-//			}
-//
-//			// Get the predictions
-//			double predicted = svm.svm_predict_probability(model, nodes, probabilities);
-//			results.add(new SVMResult(label, probabilities[1]));
-//		}
 
 		// Sort the results in decreasing order of probability
 		Iterator<SVMResult> sortedResults = results.stream().sorted((r1, r2) -> Double.compare(r2.probability, r1.probability)).iterator();
@@ -152,8 +141,11 @@ public class SVM {
 
 		return auc;
 	}
+	public static double calculateAuc(svm_model model, DatasetMatrices testData) {
+		return calculateAuc(model, testData, 1.0);
+	}
 
-	public static ArrayList<SVMResult> getProbabilityPredictions(svm_model model, DatasetMatrices testData) {
+	public static ArrayList<SVMResult> getProbabilityPredictions(svm_model model, DatasetMatrices testData, double positiveClass) {
 		double[] testLabels = testData.getLabelVector();
 		double[][] testDesignMatrix = testData.getDesignMatrix();
 		double[] probabilities = new double[2];
@@ -168,7 +160,7 @@ public class SVM {
 		double posCount = 0;
 		double negCount = 0;
 		for(int i = 0; i < testData.getN(); i++) {
-			double label = testLabels[i];
+			double label = (testLabels[i] == positiveClass ? 1 : 0);
 			if(label == 0)
 				negCount++;
 			else
@@ -186,6 +178,9 @@ public class SVM {
 			results.add(new SVMResult(label, probabilities[posClassIndex]));
 		}
 		return results;
+	}
+	public static ArrayList<SVMResult> getProbabilityPredictions(svm_model model, DatasetMatrices testData) {
+		return getProbabilityPredictions(model, testData, 1.0);
 	}
 
 	public static double[][] getRocPoints(ArrayList<SVMResult> results) {
@@ -224,5 +219,72 @@ public class SVM {
 		}
 
 		return new double[][] { xData, yData };
+	}
+
+	public static APRStatistics getMulticlassPerformance(ArrayList<svm_model> classModels, DatasetMatrices testData) {
+		ArrayList<ArrayList<SVMResult>> modelResults = new ArrayList<ArrayList<SVMResult>>();
+		for(int positiveClass = 0; positiveClass < classModels.size(); positiveClass++) {
+			svm_model model = classModels.get(positiveClass);
+			modelResults.add(getProbabilityPredictions(model, testData, positiveClass));
+		}
+		// Now we have collected probability results for each of the models. We predict the class that has the highest
+		// probability prediction of all the models
+		ArrayList<Double> predictions = new ArrayList<Double>();
+		for(int i = 0; i < testData.getN(); i++) {
+			double currentPrediction = 0;
+			double currentBestProbability = 0;
+			for(int classLabel = 0; classLabel < modelResults.size(); classLabel++) {
+				SVMResult result = modelResults.get(classLabel).get(i);
+				if(result.probability > currentBestProbability) {
+					currentPrediction = classLabel;
+					currentBestProbability = result.probability;
+				}
+			}
+			predictions.add(currentPrediction);
+		}
+
+		// Calculate accuracy
+		int correctPredictions = 0;
+		double[] testLabels = testData.getLabelVector();
+		for(int i = 0; i < testLabels.length; i++) {
+			double actual = testLabels[i];
+			double prediction = predictions.get(i);
+			if(actual == prediction) {
+				correctPredictions++;
+			}
+		}
+		double accuracy = (double)correctPredictions / (double)testLabels.length * 100;
+
+		// Calculate precision and recall for each class
+		ArrayList<Double> precisions = new ArrayList<Double>();
+		ArrayList<Double> recalls = new ArrayList<Double>();
+		ArrayList<Integer> classLabels = new ArrayList<Integer>();
+		for(int classLabel = 0; classLabel < classModels.size(); classLabel++) {
+			classLabels.add(classLabel);
+			int tp = 0, fp = 0, fn = 0;
+			for(int i = 0; i < testLabels.length; i++) {
+				double actual = testLabels[i];
+				double prediction = predictions.get(i);
+				if(actual == classLabel && prediction == classLabel) {
+					tp++;
+				} else if (prediction == classLabel && actual != classLabel) {
+					fp++;
+				} else if (actual == classLabel && prediction != classLabel) {
+					fn++;
+				}
+			}
+			double precision = (double)tp / (tp + fp) * 100;
+			double recall = (double)tp / (tp + fn) * 100;
+			// Sometimes a class won't be represented in a test set. In that case, just say we have
+			// 100% precision or recall to prevent NaN results.
+			if(Double.isNaN(precision))
+				precision = 100;
+			if(Double.isNaN(recall))
+				recall = 100;
+			precisions.add(precision);
+			recalls.add(recall);
+		}
+
+		return new APRStatistics(accuracy, classLabels, precisions, recalls, null);
 	}
 }
