@@ -170,13 +170,27 @@ public class ClassificationExecutor2 {
 		System.out.println("--------------------------------------------");
 		System.out.println("Problem 4 - Multiclass SVM");
 		System.out.println("--------------------------------------------");
-		ArrayList<String> wineClasses = new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"}));
 		Dataset wineDataset = new Dataset(
 				"data/wine.data",
 				generateContinuousFeatureList(13),
 				new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"})));
 		KFoldCrossValidation wineCross = new KFoldCrossValidation(10, wineDataset);
 		testSvmGridSearchMulticlass(wineCross, 3, 5, -5, 10, -15, 5, false, "Wine Dataset");
+
+		Dataset digitsTraining = new Dataset(
+				"data/optdigits.tra",
+				generateContinuousFeatureList(64),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"})));
+		Dataset digitsTest = new Dataset(
+				"data/optdigits.tes",
+				generateContinuousFeatureList(64),
+				new ArrayList<String>(Arrays.asList(new String[] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"})));
+		TrainingValidationSet digitsTvSet = new TrainingValidationSet(
+				digitsTraining.getInstances(),
+				digitsTest.getInstances(),
+				generateContinuousFeatureList(64));
+		KFoldCrossValidation digitsCross = new KFoldCrossValidation(1, new ArrayList<TrainingValidationSet>(Arrays.asList(digitsTvSet)));
+		testSvmGridSearchMulticlass(digitsCross, 10, 5, -5, 10, -15, 5, false, "Digits Dataset");
 
 		System.out.println("Done!");
 	}

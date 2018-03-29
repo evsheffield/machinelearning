@@ -54,6 +54,12 @@ public class KFoldCrossValidation {
 		}
 	}
 
+	public KFoldCrossValidation(int k, ArrayList<TrainingValidationSet> folds) {
+		super();
+		this.k = k;
+		this.folds = folds;
+	}
+
 	public int getK() {
 		return k;
 	}

@@ -29,7 +29,11 @@ public class BinaryAPRStatistics {
 	public BinaryAPRStatistics(int tp, int tn, int fp, int fn) {
 		accuracy = (double)(tp + tn) / (tp + tn + fp + fn) * 100;
 		precision = (double)tp / (tp + fp) * 100;
+		if(Double.isNaN(precision))
+			precision = 100;
 		recall = (double)tp / (tp + fn) * 100;
+		if(Double.isNaN(recall))
+			recall = 100;
 	}
 
 	public double getAccuracy() {

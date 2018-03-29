@@ -103,10 +103,14 @@ public class TrainingValidationSet {
 				// of the training set
 				for(Instance i : trainingSet) {
 					double normalizedValue = ((double)i.getFeatureValue(featureKey) - mean) /standardDeviation;
+					if(Double.isNaN(normalizedValue))
+						normalizedValue = 0;
 					i.setFeatureValue(featureKey, normalizedValue);
 				}
 				for(Instance i : testSet) {
 					double normalizedValue = ((double)i.getFeatureValue(featureKey) - mean) /standardDeviation;
+					if(Double.isNaN(normalizedValue))
+						normalizedValue = 0;
 					i.setFeatureValue(featureKey, normalizedValue);
 				}
 			}
