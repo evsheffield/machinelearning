@@ -153,7 +153,6 @@ public class SVM {
 		ArrayList<SVMResult> results = getProbabilityPredictions(model, testData, positiveClass);
 		double posCount = 0;
 		double negCount = 0;
-		// TODO try to obtain this while doing the predictions
 		for(SVMResult result : results) {
 			if(result.actualLabel == 0)
 				negCount++;
@@ -203,14 +202,8 @@ public class SVM {
 		int posClassIndex = classLabels[0] == 0 ? 1 : 0;
 
 		ArrayList<SVMResult> results = new ArrayList<SVMResult>();
-		double posCount = 0;
-		double negCount = 0;
 		for(int i = 0; i < testData.getN(); i++) {
 			double label = (testLabels[i] == positiveClass ? 1 : 0);
-			if(label == 0)
-				negCount++;
-			else
-				posCount++;
 			svm_node[] nodes = new svm_node[testData.getM()];
 			for(int j = 0; j < testData.getM(); j++) {
 				svm_node node = new svm_node();
@@ -220,7 +213,7 @@ public class SVM {
 			}
 
 			// Get the predictions
-			double predicted = svm.svm_predict_probability(model, nodes, probabilities);
+			svm.svm_predict_probability(model, nodes, probabilities);
 			results.add(new SVMResult(label, probabilities[posClassIndex]));
 		}
 		return results;
@@ -244,7 +237,6 @@ public class SVM {
 
 		double posCount = 0;
 		double negCount = 0;
-		// TODO try to obtain this while doing the predictions
 		for(SVMResult result : results) {
 			if(result.actualLabel == 0)
 				negCount++;

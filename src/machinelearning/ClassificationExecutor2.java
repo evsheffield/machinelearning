@@ -111,7 +111,7 @@ public class ClassificationExecutor2 {
 		testLogisticRegression(bcCross,
 				0.002,
 				0.01,
-				new double[] {0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1},
+				new double[] {0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 450, 500},
 				"Breast Cancer Dataset - Logistic Regression",
 				"Breast Cancer Dataset - Mean Accuracy for Regularization coefficients (lambda)");
 
@@ -150,18 +150,18 @@ public class ClassificationExecutor2 {
 		System.out.println("*********************************");
 		List<XYChart> bcCharts = new ArrayList<XYChart>();
 		System.out.println("-- Optimizing Accuracy --");
-		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 10, -15, 5, false, "Breast Cancer ROC Curve - Accuracy Optimized"));
+		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 8, -13, -3, false, "Breast Cancer ROC Curve - Accuracy Optimized"));
 		System.out.println("-- Optimizing AUC --");
-		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 10, -15, 5, true, "Breast Cancer ROC Curve - AUC Optimized"));
+		bcCharts.add(testSvmGridSearch(bcCross, 5, -5, 8, -13, -3, true, "Breast Cancer ROC Curve - AUC Optimized"));
 		new SwingWrapper<XYChart>(bcCharts).displayChartMatrix("Breast Cancer ROC Curves");
 
 		System.out.println("\nTesting Diabetes Dataset");
 		System.out.println("****************************");
 		List<XYChart> diabetesCharts = new ArrayList<XYChart>();
 		System.out.println("-- Optimizing Accuracy --");
-		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 10, -15, 5, false, "Diabetes ROC Curve - Accuracy Optimized"));
+		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 8, -11, -4, false, "Diabetes ROC Curve - Accuracy Optimized"));
 		System.out.println("-- Optimizing AUC --");
-		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 10, -15, 5, true, "Diabetes ROC Curve - AUC Optimized"));
+		diabetesCharts.add(testSvmGridSearch(diabetesCross, 5, -5, 8, -11, -4, true, "Diabetes ROC Curve - AUC Optimized"));
 		new SwingWrapper<XYChart>(diabetesCharts).displayChartMatrix("Diabetes ROC Curves");
 
 		// --------------------------------------------
@@ -190,7 +190,7 @@ public class ClassificationExecutor2 {
 				digitsTest.getInstances(),
 				generateContinuousFeatureList(64));
 		KFoldCrossValidation digitsCross = new KFoldCrossValidation(1, new ArrayList<TrainingValidationSet>(Arrays.asList(digitsTvSet)));
-		testSvmGridSearchMulticlass(digitsCross, 10, 5, -5, 10, -15, 5, false, "Digits Dataset");
+		testSvmGridSearchMulticlass(digitsCross, 10, 5, -5, 5, -9, -4, false, "Digits Dataset");
 
 		System.out.println("Done!");
 	}
@@ -377,11 +377,9 @@ public class ClassificationExecutor2 {
 			DescriptiveStatistics trainingPrecisionStats = new DescriptiveStatistics();
 			DescriptiveStatistics testPrecisionStats = new DescriptiveStatistics();
 
-			int foldNum = 0;
 			System.out.println("\nLearning Rate: " + learningRate + ", Tolerance: " + tolerance + ", Regularization: " + lambda);
 			System.out.println("---------------------------");
 			for(TrainingValidationMatrixSet fold : matrixFolds) {
-				foldNum++;
 
 				// Create a logistic regression model
 				LogisticRegression logReg = new LogisticRegression(fold.getTrainingSet());
@@ -493,7 +491,6 @@ public class ClassificationExecutor2 {
 			ArrayList<TrainingValidationSet> subFolds = fold.getTrainingSetFolds(m);
 			ArrayList<TrainingValidationMatrixSet> subFoldMatrices = new ArrayList<TrainingValidationMatrixSet>();
 			for(TrainingValidationSet subFold : subFolds) {
-				// TODO should we add a constant feature here??
 				subFoldMatrices.add(new TrainingValidationMatrixSet(subFold, true));
 			}
 
@@ -509,7 +506,6 @@ public class ClassificationExecutor2 {
 
 				for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
 					// Get a matrix representation of the subfold
-					// TODO can we not recalculate this too many times?
 					svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
 
 					// Train a linear model
@@ -544,7 +540,6 @@ public class ClassificationExecutor2 {
 
 					for(TrainingValidationMatrixSet matrixSubFold : subFoldMatrices) {
 						// Get a matrix representation of the subfold
-						// TODO can we not recalculate this too many times?
 						svm_problem trainingProblem = SVM.createSvmProblem(matrixSubFold.getTrainingSet());
 
 						// Train a linear model
