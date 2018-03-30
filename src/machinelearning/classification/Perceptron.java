@@ -10,6 +10,13 @@ import org.apache.commons.math3.linear.RealVector;
 import machinelearning.dataset.DatasetMatrices;
 import machinelearning.validation.BinaryAPRStatistics;
 
+/**
+ * A Perceptron classifier which supports training using
+ * both the primal perceptron problem and the kernelized
+ * dual version.
+ *
+ * @author evanc
+ */
 public class Perceptron {
 	private RealVector weights;
 	private RealVector alphas;
@@ -22,7 +29,13 @@ public class Perceptron {
 
 	private static final int MAX_EPOCHS = 100;
 
+	/**
+	 * The linear kernel
+	 */
 	private BiFunction<RealVector, RealVector, Double> linearKernel = (x, z) -> x.dotProduct(z);
+	/**
+	 * The RBF (Gaussian) kernel.
+	 */
 	private BiFunction<RealVector, RealVector, Double> rbfKernel = (x, z) -> {
 		RealVector xMinusZ = x.subtract(z);
 		return Math.exp(-bandwidth * xMinusZ.dotProduct(xMinusZ));
@@ -37,6 +50,16 @@ public class Perceptron {
 		m = designMatrix.getColumnDimension();
 	}
 
+	/**
+	 * Trains the perceptron using the standard perceptron algorithm based
+	 * on the primal problem.
+	 *
+	 * Converges once all the training instances have been correctly classified
+	 * in an epoch. Capped to a maximum number of epochs in case it does not
+	 * converge.
+	 *
+	 * @param learningRate The learning rate of the algorithm
+	 */
 	public void trainByPerceptronAlgorithm(double learningRate) {
 		// Initialize the weight vector to all zeros
 		double[] initWeights = new double[m];
@@ -66,15 +89,30 @@ public class Perceptron {
 		}
 	}
 
+	/**
+	 * Trains the dual perceptron problem using a linear kernel.
+	 *
+	 * This is effectively the same as solving the primal perceptron problem.
+	 */
 	public void trainByDualLinearKernel() {
 		trainByDualPerceptron(linearKernel);
 	}
 
+	/**
+	 * Trains the dual perceptron problem using a Gaussian (RBF) kernel.
+	 *
+	 * @param bandwidth The gamma parameter of the kernel
+	 */
 	public void trainByDualGaussianKernel(double bandwidth) {
 		this.bandwidth = bandwidth;
 		trainByDualPerceptron(rbfKernel);
 	}
 
+	/**
+	 * Trains the perceptron using the given kernel function.
+	 *
+	 * @param kernelFunction A kernel function
+	 */
 	public void trainByDualPerceptron(BiFunction<RealVector, RealVector, Double> kernelFunction) {
 		// Initialize our list of alphas, which represent the number of times we
 		// have made a mistake for each item in the training data
@@ -111,6 +149,13 @@ public class Perceptron {
 		}
 	}
 
+	/**
+	 * Evaluates the performance of the perceptron on a test dataset.
+	 *
+	 * @param data The data to test the model against
+	 * @param trainingType The way the model was trained (e.g. primal, dual linear, dual rbf)
+	 * @return Accuracy, precision, and recall statistics
+	 */
 	public BinaryAPRStatistics getPerformance(DatasetMatrices data, PerceptronTrainingType trainingType) {
 		RealMatrix sampleDesignMatrix = MatrixUtils.createRealMatrix(data.getDesignMatrix());
 		RealVector sampleLabelVector = MatrixUtils.createRealVector(data.getLabelVector());
@@ -135,6 +180,13 @@ public class Perceptron {
 		return new BinaryAPRStatistics(tp, tn, fp, fn);
 	}
 
+	/**
+	 * Predicts the label for an unseen instance with the given features.
+	 *
+	 * @param featureVector The features of the instance to predict
+	 * @param trainingType The way the perceptron was trained
+	 * @return The prediction, either 1 or -1
+	 */
 	private int getPrediction(RealVector featureVector, PerceptronTrainingType trainingType) {
 		switch(trainingType) {
 			case DualLinearKernel:
@@ -163,6 +215,15 @@ public class Perceptron {
 		}
 	}
 
+	/**
+	 * Gets the label from a vector of labels. Converts labels
+	 * from {0,1} into labels of {-1,1}.
+	 *
+	 * @param labels The vector of labels
+	 * @param i The index into the label vector
+	 * @return The label at index i, as -1 for the negative class or 1 for
+	 * the positive class.
+	 */
 	private int getLabel(RealVector labels, int i) {
 		return labels.getEntry(i) == 0 ? -1 : 1;
 	}

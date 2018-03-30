@@ -72,7 +72,7 @@ public class ClassificationExecutor2 {
 		KFoldCrossValidation spiralCross = new KFoldCrossValidation(10, spiralDataset);
 
 		System.out.print("Finding best gamma for Gaussian kernel... ");
-		double bandwidth = gridSearchBandwidth(0.01, 0.25, 0.01, spiralCross);
+		double bandwidth = gridSearchBandwidth(0.04, 0.25, 0.01, spiralCross);
 		System.out.println("Best bandwidth, first iteration: " + bandwidth);
 		double nextBandwidth = gridSearchBandwidth(bandwidth - 0.01, bandwidth + 0.01, 0.001, spiralCross);
 		System.out.println("Best bandwidth, second iteration: " + nextBandwidth);
@@ -210,6 +210,11 @@ public class ClassificationExecutor2 {
 		return features;
 	}
 
+	/**
+	 * Tests the perceptron model trained using various training types
+	 * @param cross The KFoldCrossValidation set
+	 * @param trainingTypes The types of training to test
+	 */
 	private static void testPerceptron(KFoldCrossValidation cross, PerceptronTrainingType[] trainingTypes) {
 		// Convert the folds to matrix form, add the constant feature,
 		// and z-score normalize the features
@@ -288,6 +293,17 @@ public class ClassificationExecutor2 {
 		}
 	}
 
+	/**
+	 * Performs a search in order to select a gamma value for the RBF kernel
+	 * of the dual perceptron. Selects the one with the highest accuracy.
+	 *
+	 * @param min The minimum value to test
+	 * @param max The maximum value to test
+	 * @param incr The value to increment the gamma by for each iteration
+	 * @param cross The K-fold cross validation set
+	 * @return The value of gamma searched which produced the highest
+	 * mean test accuracy for cross-validation
+	 */
 	private static double gridSearchBandwidth(double min, double max, double incr, KFoldCrossValidation cross) {
 		// Convert the folds to matrix form, add the constant feature,
 		// and z-score normalize the features
@@ -422,6 +438,25 @@ public class ClassificationExecutor2 {
 	    new SwingWrapper<XYChart>(chart).displayChart();
 	}
 
+	/**
+	 * Performs a grid search hyper-parameter selection using Linear and RBF
+	 * kernel based SVM models. Uses a nested cross-validation strategy where
+	 * the training set of each fold is partitioned into m sub-folds and used
+	 * for hyperparameter selection.
+	 *
+	 * @param cross The cross fold validation set to test with.
+	 * @param m The number of folds to use in the inner cross-validation loop.
+	 * @param cMin The minimum exponent as a power of two of hyper-parameter C
+	 * to use in the grid search.
+	 * e.g. -5 will mean the minimum value will be 2^-5, then 2^-4, etc.
+	 * @param cMax The exponent for a power of two of the maximum value of hyperparameter C
+	 * @param gammaMin The minimum exponent of hyper-parameter gamma for powers of 2.
+	 * @param gammaMax The maximum exponent of hyper-parameter gamma for powers of 2.
+	 * @param maximizeAuc Should hyperparameters be selected by maximizing AUC? If false,
+	 * uses accuracy
+	 * @param plotTitle The title to use for the generated ROC-AUC curve
+	 * @return A chart containing the ROC-AUC curve for the entire k-folds
+	 */
 	private static XYChart testSvmGridSearch(KFoldCrossValidation cross, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
 			String plotTitle) {
 
@@ -620,8 +655,29 @@ public class ClassificationExecutor2 {
 	    return chart;
 	}
 
-	private static void testSvmGridSearchMulticlass(KFoldCrossValidation cross, int nrClasses, int m, int cMin, int cMax, int gammaMin, int gammaMax, boolean maximizeAuc,
-			String plotTitle) {
+	/**
+	 * Performs a grid search hyper-parameter selection using Linear and RBF
+	 * kernel based SVM models for a multi-class dataset.
+	 * Uses a nested cross-validation strategy where
+	 * the training set of each fold is partitioned into m sub-folds and used
+	 * for hyperparameter selection.
+	 *
+	 * @param cross The cross fold validation set to test with.
+	 * @param nrClasses The number of classes in the multi-class problem
+	 * @param m The number of folds to use in the inner cross-validation loop.
+	 * @param cMin The minimum exponent as a power of two of hyper-parameter C
+	 * to use in the grid search.
+	 * e.g. -5 will mean the minimum value will be 2^-5, then 2^-4, etc.
+	 * @param cMax The exponent for a power of two of the maximum value of hyperparameter C
+	 * @param gammaMin The minimum exponent of hyper-parameter gamma for powers of 2.
+	 * @param gammaMax The maximum exponent of hyper-parameter gamma for powers of 2.
+	 * @param maximizeAuc Should hyperparameters be selected by maximizing AUC? If false,
+	 * uses accuracy
+	 * @param plotTitle The title to use for the generated ROC-AUC curve
+	 * @return A matrix of ROC-AUC charts for each class across k-folds
+	 */
+	private static void testSvmGridSearchMulticlass(KFoldCrossValidation cross, int nrClasses, int m, int cMin,
+			int cMax, int gammaMin, int gammaMax, boolean maximizeAuc, String plotTitle) {
 
 		// LIBSVM is too chatty - override the print function to do nothing
 		svm_print_interface printFunc = new svm_print_interface() {

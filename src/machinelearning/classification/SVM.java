@@ -20,6 +20,14 @@ import machinelearning.validation.BinaryAPRStatistics;
  */
 public class SVM {
 
+	/**
+	 * Creates an SVM problem used to train a LIBSVM model
+	 *
+	 * @param trainingData The training data to formulate for the model
+	 * @param positiveClass The class to use as the positive class. All other classes
+	 * will be considered negative
+	 * @return An svm_problem which can be used to train an SVM model
+	 */
 	public static svm_problem createSvmProblem(DatasetMatrices trainingData, double positiveClass) {
 		svm_problem trainingProblem = new svm_problem();
 		// Components of svm problem:
@@ -51,6 +59,17 @@ public class SVM {
 		return createSvmProblem(trainingData, 1.0);
 	}
 
+	/**
+	 * Gets a trained SVM model based on the given data and hyperparameters.
+	 *
+	 * @param trainingProblem The training data
+	 * @param kernel The type of kernel to use (linear or RBF)
+	 * @param c The value of the hyperparameter C (soft-margin cost)
+	 * @param gamma Gamma value for RBF kernel which controls the variance of the Gaussian
+	 * @param includeProb Whether or not to include probability information in the model.
+	 * Including probability generally results in slower training.
+	 * @return The trained SVM model
+	 */
 	public static svm_model trainModel(svm_problem trainingProblem, KernelType kernel, double c, double gamma, boolean includeProb) {
 		// Create parameters for the model training
 		svm_parameter parameters = new svm_parameter();
@@ -75,6 +94,14 @@ public class SVM {
 		return trainModel(trainingProblem, kernel, c, gamma, false);
 	}
 
+	/**
+	 * Gets the performance of a given model on a set of test data.
+	 *
+	 * @param model The SVM model whose performance should be evaluated
+	 * @param testData The test data to evaluate the model against
+	 * @param positiveClass The class label to use as the positive class
+	 * @return A collection of accuracy, precision, and recall statistics
+	 */
 	public static BinaryAPRStatistics getModelPerformance(svm_model model, DatasetMatrices testData, double positiveClass) {
 		double[] testLabels = testData.getLabelVector();
 		double[][] testDesignMatrix = testData.getDesignMatrix();
@@ -112,6 +139,16 @@ public class SVM {
 		return getModelPerformance(model, testData, 1.0);
 	}
 
+	/**
+	 * Calculates the AUC (area under the curve) of a model.
+	 *
+	 * Requires that the passed model has been trained with probability information included.
+	 *
+	 * @param model The model to get the AUC for
+	 * @param testData The test data
+	 * @param positiveClass The class label to use as the positive class
+	 * @return The AUC
+	 */
 	public static double calculateAuc(svm_model model, DatasetMatrices testData, double positiveClass) {
 		ArrayList<SVMResult> results = getProbabilityPredictions(model, testData, positiveClass);
 		double posCount = 0;
@@ -145,6 +182,15 @@ public class SVM {
 		return calculateAuc(model, testData, 1.0);
 	}
 
+	/**
+	 * Predicts positive class probabilities for each of the instances in the test data
+	 * set using the given model.
+	 *
+	 * @param model The model to use for prediction
+	 * @param testData The test data to get predictions for
+	 * @param positiveClass The class label to use as the positive class
+	 * @return A list of probability predictions for each of the test data instances
+	 */
 	public static ArrayList<SVMResult> getProbabilityPredictions(svm_model model, DatasetMatrices testData, double positiveClass) {
 		double[] testLabels = testData.getLabelVector();
 		double[][] testDesignMatrix = testData.getDesignMatrix();
@@ -183,6 +229,12 @@ public class SVM {
 		return getProbabilityPredictions(model, testData, 1.0);
 	}
 
+	/**
+	 * Generates the set of (X,Y) points in a ROC curve for a given set of predictions.
+	 *
+	 * @param results The probability predictions and actual class labels from a set of test data
+	 * @return The (X,Y) data points to use in drawing the ROC-AUC curve
+	 */
 	public static double[][] getRocPoints(ArrayList<SVMResult> results) {
 		Iterator<SVMResult> sortedResults = results.stream().sorted((r1, r2) -> Double.compare(r2.probability, r1.probability)).iterator();
 		double[] xData = new double[results.size() + 1];
@@ -221,6 +273,15 @@ public class SVM {
 		return new double[][] { xData, yData };
 	}
 
+	/**
+	 * Gets the performance of a multiclass SVM problem, given a set of 1-vs-all SVM models that have been trained
+	 * for each class label.
+	 *
+	 * @param classModels The 1-vs-all models trained for each class. These should be in the same order as the indices
+	 * of the class labels themselves.
+	 * @param testData The test dataset
+	 * @return Acurracy, precision, and recall information for each class
+	 */
 	public static APRStatistics getMulticlassPerformance(ArrayList<svm_model> classModels, DatasetMatrices testData) {
 		ArrayList<ArrayList<SVMResult>> modelResults = new ArrayList<ArrayList<SVMResult>>();
 		for(int positiveClass = 0; positiveClass < classModels.size(); positiveClass++) {
