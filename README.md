@@ -1,4 +1,4 @@
-# CS6140 - Assignment 4
+# CS6140 - Assignment 5
 
 Evan Sheffield
 
@@ -58,17 +58,7 @@ all the `.jar` files in the `lib` folder.
 
 ### Running
 
-The main entry point for the application is `ClassificationExecutor2.java`, located in `src/machinelearning`.
+The main entry point for the application is `ClusteringExecutor.java`, located in `src/machinelearning`.
 Find this file in the package explorer, then right-click on it and choose
 `Run As` -> `Java Application`. This will build models and run tests for all of the datasets
 in the assignment and output the results to the console. Any plots will be opened in Swing panels.
-
-### A note about performance
-
-Many parts of this assignment involve running grid search for hyper-parameter selection.
-Because of the size of the grid and the training time of LIBSVM, some of these searches can
-run for as long as several hours depending on the dataset. The submitted code has had ranges
-restricted somewhat to alleviate this, but for faster results, you can adjust
-the ranges of hyper-parameters searched by altering the parameters passed to `testSvmGridSearch`
-and `testSvmGridSearchMulticlass` in the main method of `ClassificationExecutor2`
-to use a smaller search grid.
