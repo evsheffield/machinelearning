@@ -1,6 +1,8 @@
 package machinelearning.dataset;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -22,6 +24,7 @@ public class DatasetMatrices {
 	private double[][] designMatrix;
 	private double[] labelVector;
 	private boolean addedConstantFeature;
+	private Set<Double> distinctLabels;
 
 	public DatasetMatrices(Feature[] features, ArrayList<Instance> instances, boolean addConstantFeature) {
 		N = instances.size();
@@ -34,10 +37,13 @@ public class DatasetMatrices {
 		designMatrix = new double[N][m];
 		labelVector = new double[N];
 
+		distinctLabels = new HashSet<Double>();
+
 		for(int row = 0; row < N; row++) {
 			Instance instance = instances.get(row);
 			// Set the value in the label vector
 			labelVector[row] = instance.getInstanceClass();
+			distinctLabels.add(labelVector[row]);
 
 			// Add a 1 for the constant feature
 			int col = 0;
@@ -158,6 +164,36 @@ public class DatasetMatrices {
 		return centered;
 	}
 
+	/**
+	 * Normalizes all the continuous features of the training and test datasets to
+	 * their z-score.
+	 *
+	 * z-score of an individual value x is defined as:
+	 * (x - mean) / sd
+	 * Where mean and sd refer to the mean and standard deviation of the population
+	 * (i.e. training set values)
+	 */
+	public double[][] getZScoreNormalizedDesignMatrix() {
+		double[][] normDesignMatrix = designMatrix;
+		// For each column
+		int startingColumn = addedConstantFeature ? 1 : 0;
+		for(int col = startingColumn; col < m; col++) {
+			// Get the training mean and SD of the column
+			DescriptiveStatistics stats = new DescriptiveStatistics();
+			for(int row = 0; row < N; row++) {
+				stats.addValue(normDesignMatrix[row][col]);
+			}
+			double mean = stats.getMean();
+			double standardDeviation = stats.getStandardDeviation();
+
+			// Normalize the value of this feature for all instances
+			for(int row = 0; row < N; row++) {
+				normDesignMatrix[row][col] = (normDesignMatrix[row][col] - mean) / standardDeviation;
+			}
+		}
+		return normDesignMatrix;
+	}
+
 	public int getN() {
 		return N;
 	}
@@ -174,6 +210,10 @@ public class DatasetMatrices {
 		return labelVector;
 	}
 
+	public Set<Double> getDistinctLabels() {
+		return distinctLabels;
+	}
+
 	public void setDesignMatrix(double[][] designMatrix) {
 		this.designMatrix = designMatrix;
 	}
@@ -181,6 +221,4 @@ public class DatasetMatrices {
 	public void setLabelVector(double[] labelVector) {
 		this.labelVector = labelVector;
 	}
-
-
 }
