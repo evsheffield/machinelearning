@@ -1,9 +1,12 @@
 package machinelearning.clustering;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -61,6 +64,7 @@ public class KMeans {
 		for(int cluster = 0; cluster < K; cluster++ ) {
 			int i;
 			do {
+//				i = cluster;
 				i = ThreadLocalRandom.current().nextInt(N);
 			} while(usedPoints.contains(i));
 			usedPoints.add(i);
@@ -112,6 +116,15 @@ public class KMeans {
 			sum += Math.pow(instance.getDistance(clusterCentroid), 2);
 		}
 		return sum;
+	}
+
+	/**
+	 * Gets the normalized mutual information (NMI) for the cluster.
+	 * NMI is defined as 2 x I(Y;C) / [H(Y) + H(C)]
+	 * @return
+	 */
+	public double getNormalizedMutualInformation() {
+		return (2 * getMutualInformation()) / (getEntropy(clusterLabels) + getEntropy(labels));
 	}
 
 	/**
@@ -190,19 +203,79 @@ public class KMeans {
 		return entropy;
 	}
 
+	/**
+	 * Get the entropy of a set of instances in a node.
+	 *
+	 * @param instances The instances in the node
+	 * @return The entropy
+	 */
+	private static double getEntropy(double[] values) {
+		ArrayList<Double> valuesList = DoubleStream.of(values).boxed()
+				.collect(Collectors.toCollection(ArrayList::new));
+		return getEntropy(valuesList);
+	}
+
+	/**
+	 * Get the entropy of a set of instances in a node.
+	 *
+	 * @param instances The instances in the node
+	 * @return The entropy
+	 */
+	private double getEntropy(int[] values) {
+		return getEntropy(Arrays.stream(values).asDoubleStream().toArray());
+	}
+
+	/**
+	 * Gets the class entropy within a specific cluster, H(Y|C)
+	 *
+	 * @param clusterIx The index of the cluster to get the class entropy for
+	 * @return The conditional class entropy of the cluster
+	 */
 	private double getConditionalClassEntropyForCluster(int clusterIx) {
-		// TODO Not yet implemented
 		ArrayList<Integer> cluster = getClusterInstanceIndices(clusterIx);
 		double clusterProbability = (double)cluster.size() / N;
 
+		// Count the instances of each class in the cluster
 		HashMap<Double, Integer> classCounts = new HashMap<Double, Integer>();
 		for(Double classLabel : distinctLabels) {
 			classCounts.put(classLabel, 0);
 		}
 		for(int instanceIx : cluster) {
 			// Get the class of the instance
-
+			double instanceClass = labels[instanceIx];
+			classCounts.put(instanceClass, classCounts.get(instanceClass) + 1);
 		}
-		return 0;
+
+		// Get the conditional probability of each class for the cluster
+		HashMap<Double, Double> probabilities = new HashMap<Double, Double>();
+		double totalInstances = cluster.size();
+		for(Double key : classCounts.keySet()) {
+			probabilities.put(key, (double)classCounts.get(key) / totalInstances);
+		}
+
+		double sum = 0;
+		for(Double key : probabilities.keySet()) {
+			double prob = probabilities.get(key);
+			// Skip 0 probabilities to avoid calculating log(0)
+			if(prob != 0)
+				sum += (prob * log2(prob));
+		}
+
+		return -(totalInstances / N) * sum;
+	}
+
+	/**
+	 * Gets the mutual information for the clustering based
+	 * on the actual labels. Mutual information is defined as:
+	 * I(Y;C) = H(Y) - H(Y|C)
+	 *
+	 * @return The mutual information of the clustering
+	 */
+	private double getMutualInformation() {
+		double mutualInformation = getEntropy(labels);
+		for(int cluster = 0; cluster < K; cluster++) {
+			mutualInformation -= getConditionalClassEntropyForCluster(cluster);
+		}
+		return mutualInformation;
 	}
 }

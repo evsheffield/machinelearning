@@ -32,7 +32,7 @@ public class ClusteringExecutor {
 
 		System.out.println("Dermatology Dataset");
 		System.out.println("====================");
-		testKMeansClustering(dermMatrices, 6, 6);
+		testKMeansClustering(dermMatrices, 1, 10);
 	}
 
 	/**
@@ -52,8 +52,13 @@ public class ClusteringExecutor {
 
 	private static void testKMeansClustering(DatasetMatrices data, int minK, int maxK) {
 		for(int k = minK; k <= maxK; k++) {
+			System.out.println("\n" + k + " Clusters");
 			KMeans clustering = new KMeans(data, k);
 			clustering.createClusters(0.001);
+			double sse = clustering.getSumSquaredErrors();
+			double nmi = clustering.getNormalizedMutualInformation();
+			System.out.println("SSE: " + sse);
+			System.out.println("NMI: " + nmi);
 		}
 	}
 }
