@@ -188,7 +188,10 @@ public class DatasetMatrices {
 
 			// Normalize the value of this feature for all instances
 			for(int row = 0; row < N; row++) {
-				normDesignMatrix[row][col] = (normDesignMatrix[row][col] - mean) / standardDeviation;
+				double normalizedValue = (normDesignMatrix[row][col] - mean) / standardDeviation;
+				if(Double.isNaN(normalizedValue))
+					normalizedValue = 0;
+				normDesignMatrix[row][col] = normalizedValue;
 			}
 		}
 		return normDesignMatrix;
