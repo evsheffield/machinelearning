@@ -3,13 +3,11 @@ package machinelearning.clustering;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import machinelearning.dataset.DatasetMatrices;
@@ -19,27 +17,15 @@ import machinelearning.dataset.DatasetMatrices;
  *
  * @author evanc
  */
-public class KMeans {
-	private RealMatrix designMatrix;
-	private double[] labels;
-	private Set<Double> distinctLabels;
-	private int N;
-	private int m;
-	private int K;
-	private int[] clusterLabels;
+public class KMeans extends ClusteringModel {
 	private RealVector[] centroids;
 
 	public KMeans(DatasetMatrices datasetMatrices, int k) {
-		designMatrix = MatrixUtils.createRealMatrix(datasetMatrices.getDesignMatrix());
-		labels = datasetMatrices.getLabelVector();
-		distinctLabels = datasetMatrices.getDistinctLabels();
-		N = datasetMatrices.getN();
-		m = designMatrix.getColumnDimension();
-		this.K = k;
-		clusterLabels = new int[N];
+		super(datasetMatrices, k);
 		centroids = new RealVector[k];
 	}
 
+	@Override
 	public void createClusters(double tolerance) {
 		initializeCentroids();
 
@@ -277,5 +263,9 @@ public class KMeans {
 			mutualInformation -= getConditionalClassEntropyForCluster(cluster);
 		}
 		return mutualInformation;
+	}
+
+	public RealVector[] getCentroids() {
+		return centroids;
 	}
 }
