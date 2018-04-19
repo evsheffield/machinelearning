@@ -7,6 +7,11 @@ import org.apache.commons.math3.linear.RealVector;
 
 import machinelearning.dataset.DatasetMatrices;
 
+/**
+ * A Gaussian Mixture Model clustering.
+ *
+ * @author evanc
+ */
 public class GaussianMixtureModel extends ClusteringModel {
 	private DatasetMatrices data;
 	private double[] priors;
@@ -19,9 +24,17 @@ public class GaussianMixtureModel extends ClusteringModel {
 		priors = new double[k];
 		covarianceMatrices = new RealMatrix[k];
 		responsibilities = new double[N][k];
-		// TODO Auto-generated constructor stub
 	}
 
+	/**
+	 * Uses the EM algorithm to produce a GMM clustering. Creates
+	 * a new K-Means clustering to use for initialization of model
+	 * parameters.
+	 *
+	 * @param tolerance The threshold for improved incomplete data
+	 * log likelihood. Iteration will cease once the change in LL
+	 * falls below this threshold.
+	 */
 	@Override
 	public void createClusters(double tolerance) {
 		KMeans clustering = new KMeans(data, K);
@@ -29,6 +42,15 @@ public class GaussianMixtureModel extends ClusteringModel {
 		createClusters(tolerance, clustering);
 	}
 
+	/**
+	 * Uses the EM algorithm to produce a GMM clustering.
+	 *
+	 * @param tolerance The threshold for improved incomplete data
+	 * log likelihood. Iteration will cease once the change in LL
+	 * falls below this threshold.
+	 * @param initialCluster The K-Means clustering used to
+	 * initialize the model parameters.
+	 */
 	public void createClusters(double tolerance, KMeans initialCluster) {
 		initializeModelParameters(initialCluster);
 
@@ -36,7 +58,6 @@ public class GaussianMixtureModel extends ClusteringModel {
 		double diffFromPreviousIdl = Double.POSITIVE_INFINITY;
 
 		while(diffFromPreviousIdl >= tolerance) {
-			System.out.println("iter " + diffFromPreviousIdl);
 			// E-step
 			evaluateResponsibilities();
 			// M-step
@@ -50,6 +71,16 @@ public class GaussianMixtureModel extends ClusteringModel {
 		setLabelsFromResponsibilities();
 	}
 
+	/**
+	 * Initializes the model parameters based on the provided K-Means
+	 * clustering.
+	 *
+	 * The cluster centers are used to initialize means, and initial
+	 * covariance matrices and priors are calculating using the means
+	 * and resulting cluster counts of the K-Means clustering.
+	 *
+	 * @param initialCluster The K-Means clustering to use for initialization
+	 */
 	private void initializeModelParameters(KMeans initialCluster) {
 		// Run K-means on the data. Use its centroids as our cluster
 		// means and the labels to inform our cluster responsibilities.
@@ -68,6 +99,12 @@ public class GaussianMixtureModel extends ClusteringModel {
 		estimatePriors();
 	}
 
+	/**
+	 * Evaluate the expected responsibilities of each cluster
+	 * for each instance based on the current model parameters.
+	 *
+	 * This constitutes the E-step of the EM algorithm.
+	 */
 	private void evaluateResponsibilities() {
 		for(int i = 0; i < N; i++) {
 			double[] instance = designMatrix.getRowVector(i).toArray();
@@ -86,19 +123,24 @@ public class GaussianMixtureModel extends ClusteringModel {
 				}
 
 				responsibilities[i][clusterIx] = numerator / denominator;
-				if(Double.isNaN(responsibilities[i][clusterIx])) {
-					System.out.println("uh oh");
-				}
 			}
 		}
 	}
 
+	/**
+	 * Updates the model parameters based on the current responsibilities
+	 * in order to maximize the incomplete data likelihood.
+	 */
 	private void estimateModelParameters() {
 		estimateMeans();
 		estimateCovarianceMatrices();
 		estimatePriors();
 	}
 
+	/**
+	 * Updates the model means (cluster centroids) based on the current
+	 * responsibilities.
+	 */
 	private void estimateMeans() {
 		for(int clusterIx = 0; clusterIx < K; clusterIx++) {
 			double nK = getCountClusterInstances(clusterIx);
@@ -110,7 +152,14 @@ public class GaussianMixtureModel extends ClusteringModel {
 		}
 	}
 
+	/**
+	 * Updates the model covariance matrices based on the current responsibilities
+	 * and cluster means.
+	 */
 	private void estimateCovarianceMatrices() {
+		// We add a small value to the diagonal of each covariance matrix to ensure that
+		// it will be invertible.
+		RealMatrix smallDiagonal = MatrixUtils.createRealIdentityMatrix(m).scalarMultiply(1e-10);
 		for(int clusterIx = 0; clusterIx < K; clusterIx++) {
 			double nKFrac = 1.0 / getCountClusterInstances(clusterIx);
 			RealMatrix covarianceMatrix = MatrixUtils.createRealMatrix(m, m);
@@ -119,10 +168,13 @@ public class GaussianMixtureModel extends ClusteringModel {
 				RealVector row = designMatrix.getRowVector(i).subtract(mean);
 				covarianceMatrix = covarianceMatrix.add(row.outerProduct(row).scalarMultiply(responsibilities[i][clusterIx]));
 			}
-			covarianceMatrices[clusterIx] = covarianceMatrix.scalarMultiply(nKFrac).add(MatrixUtils.createRealIdentityMatrix(m).scalarMultiply(0.000000001));
+			covarianceMatrices[clusterIx] = covarianceMatrix.scalarMultiply(nKFrac).add(smallDiagonal);
 		}
 	}
 
+	/**
+	 * Updates the priors for each cluster.
+	 */
 	private void estimatePriors() {
 		for(int clusterIx = 0; clusterIx < K; clusterIx++) {
 			double prior = getCountClusterInstances(clusterIx) / N;
@@ -130,6 +182,12 @@ public class GaussianMixtureModel extends ClusteringModel {
 		}
 	}
 
+	/**
+	 * Gets the current incomplete data log likelihood based on the current
+	 * state of the model parameters and responsibilities.
+	 *
+	 * @return The incomplete data log likelihood.
+	 */
 	private double getIncompleteDataLogLikelihood() {
 		double sum = 0;
 		for(int i = 0; i < N; i++) {
@@ -147,6 +205,11 @@ public class GaussianMixtureModel extends ClusteringModel {
 		return sum;
 	}
 
+	/**
+	 * Makes a "hard-clustering" assignment based on the current responsibilities.
+	 * The cluster with the highest value in the z-vector of each instance is used
+	 * as the hard cluster label.
+	 */
 	private void setLabelsFromResponsibilities() {
 		for(int i = 0; i < N; i++) {
 			int bestLabel = -1;

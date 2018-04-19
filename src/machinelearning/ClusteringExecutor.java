@@ -15,6 +15,12 @@ import machinelearning.dataset.DatasetMatrices;
 import machinelearning.dataset.Feature;
 import machinelearning.dataset.FeatureType;
 
+/**
+ * The main entry point for testing K-Means
+ * and GMM clustering models.
+ *
+ * @author evanc
+ */
 public class ClusteringExecutor {
 
 	public static void main(String[] args) {
@@ -82,39 +88,39 @@ public class ClusteringExecutor {
 		// --------------------------
 		// K-Means Clustering
 		// --------------------------
-//		System.out.println("--------------------------");
-//		System.out.println("K-Means Clustering");
-//		System.out.println("--------------------------");
-//
-//		System.out.println("Dermatology Dataset");
-//		System.out.println("====================");
-//		XYChart dermChart = testKMeansClustering(dermMatrices, 1, 10, "Dermatology - K-Means Clustering");
-//		new SwingWrapper<XYChart>(dermChart).displayChart();
-//
-//		System.out.println("Vowels Dataset");
-//		System.out.println("====================");
-//		XYChart vowelChart = testKMeansClustering(vowelMatrices, 1, 15, "Vowels - K-Means Clustering");
-//		new SwingWrapper<XYChart>(vowelChart).displayChart();
-//
-//		System.out.println("Glass Dataset");
-//		System.out.println("====================");
-//		XYChart glassChart = testKMeansClustering(glassMatrices, 1, 10, "Glass - K-Means Clustering");
-//		new SwingWrapper<XYChart>(glassChart).displayChart();
-//
-//		System.out.println("Ecoli Dataset");
-//		System.out.println("====================");
-//		XYChart ecoliChart = testKMeansClustering(ecoliMatrices, 1, 10, "Ecoli - K-Means Clustering");
-//		new SwingWrapper<XYChart>(ecoliChart).displayChart();
-//
-//		System.out.println("Yeast Dataset");
-//		System.out.println("====================");
-//		XYChart yeastChart = testKMeansClustering(yeastMatrices, 1, 15, "Yeast - K-Means Clustering");
-//		new SwingWrapper<XYChart>(yeastChart).displayChart();
-//
-//		System.out.println("Soybean Dataset");
-//		System.out.println("====================");
-//		XYChart soybeanChart = testKMeansClustering(soybeanMatrices, 1, 20, "Soybean - K-Means Clustering");
-//		new SwingWrapper<XYChart>(soybeanChart).displayChart();
+		System.out.println("--------------------------");
+		System.out.println("K-Means Clustering");
+		System.out.println("--------------------------");
+
+		System.out.println("Dermatology Dataset");
+		System.out.println("====================");
+		XYChart dermChart = testKMeansClustering(dermMatrices, 1, 10, "Dermatology - K-Means Clustering");
+		new SwingWrapper<XYChart>(dermChart).displayChart();
+
+		System.out.println("Vowels Dataset");
+		System.out.println("====================");
+		XYChart vowelChart = testKMeansClustering(vowelMatrices, 1, 15, "Vowels - K-Means Clustering");
+		new SwingWrapper<XYChart>(vowelChart).displayChart();
+
+		System.out.println("Glass Dataset");
+		System.out.println("====================");
+		XYChart glassChart = testKMeansClustering(glassMatrices, 1, 10, "Glass - K-Means Clustering");
+		new SwingWrapper<XYChart>(glassChart).displayChart();
+
+		System.out.println("Ecoli Dataset");
+		System.out.println("====================");
+		XYChart ecoliChart = testKMeansClustering(ecoliMatrices, 1, 10, "Ecoli - K-Means Clustering");
+		new SwingWrapper<XYChart>(ecoliChart).displayChart();
+
+		System.out.println("Yeast Dataset");
+		System.out.println("====================");
+		XYChart yeastChart = testKMeansClustering(yeastMatrices, 1, 15, "Yeast - K-Means Clustering");
+		new SwingWrapper<XYChart>(yeastChart).displayChart();
+
+		System.out.println("Soybean Dataset");
+		System.out.println("====================");
+		XYChart soybeanChart = testKMeansClustering(soybeanMatrices, 1, 20, "Soybean - K-Means Clustering");
+		new SwingWrapper<XYChart>(soybeanChart).displayChart();
 
 		// --------------------------
 		// GMM Clustering
@@ -125,42 +131,43 @@ public class ClusteringExecutor {
 
 		ArrayList<XYChart> sseCharts = new ArrayList<XYChart>();
 		ArrayList<XYChart> nmiCharts = new ArrayList<XYChart>();
+		XYChart[] charts;
 
 		System.out.println("Dermatology Dataset");
 		System.out.println("====================");
-		XYChart[] charts = testGmmClustering(dermMatrices, 1, 10, "Dermatology - SSE", "Dermatology - NMI");
+		charts = testGmmClustering(dermMatrices, 1, 10, "Dermatology - SSE", "Dermatology - NMI");
 		sseCharts.add(charts[0]);
 		nmiCharts.add(charts[1]);
 
-//		System.out.println("Vowels Dataset");
-//		System.out.println("====================");
-//		charts = testGmmClustering(vowelMatrices, 1, 15, "Vowels - SSE", "Vowels - NMI");
-//		sseCharts.add(charts[0]);
-//		nmiCharts.add(charts[1]);
-//
-//		System.out.println("Glass Dataset");
-//		System.out.println("====================");
-//		charts = testGmmClustering(glassMatrices, 1, 10, "Glass - SSE", "Glass - NMI");
-//		sseCharts.add(charts[0]);
-//		nmiCharts.add(charts[1]);
-//
+		System.out.println("Vowels Dataset");
+		System.out.println("====================");
+		charts = testGmmClustering(vowelMatrices, 1, 15, "Vowels - SSE", "Vowels - NMI");
+		sseCharts.add(charts[0]);
+		nmiCharts.add(charts[1]);
+
+		System.out.println("Glass Dataset");
+		System.out.println("====================");
+		charts = testGmmClustering(glassMatrices, 1, 10, "Glass - SSE", "Glass - NMI");
+		sseCharts.add(charts[0]);
+		nmiCharts.add(charts[1]);
+
 		System.out.println("Ecoli Dataset");
 		System.out.println("====================");
 		charts = testGmmClustering(ecoliMatrices, 1, 10, "Ecoli - SSE", "Ecoli - NMI");
 		sseCharts.add(charts[0]);
 		nmiCharts.add(charts[1]);
 
-//		System.out.println("Yeast Dataset");
-//		System.out.println("====================");
-//		charts = testGmmClustering(yeastMatrices, 1, 15, "Yeast - SSE", "Yeast - NMI");
-//		sseCharts.add(charts[0]);
-//		nmiCharts.add(charts[1]);
+		System.out.println("Yeast Dataset");
+		System.out.println("====================");
+		charts = testGmmClustering(yeastMatrices, 3, 3, "Yeast - SSE", "Yeast - NMI");
+		sseCharts.add(charts[0]);
+		nmiCharts.add(charts[1]);
 
-//		System.out.println("Soybean Dataset");
-//		System.out.println("====================");
-//		charts = testGmmClustering(soybeanMatrices, 1, 20, "Soybean - SSE", "Soybean - NMI");
-//		sseCharts.add(charts[0]);
-//		nmiCharts.add(charts[1]);
+		System.out.println("Soybean Dataset");
+		System.out.println("====================");
+		charts = testGmmClustering(soybeanMatrices, 1, 20, "Soybean - SSE", "Soybean - NMI");
+		sseCharts.add(charts[0]);
+		nmiCharts.add(charts[1]);
 
 		new SwingWrapper<XYChart>(sseCharts).displayChartMatrix();
 		new SwingWrapper<XYChart>(nmiCharts).displayChartMatrix();
@@ -181,6 +188,15 @@ public class ClusteringExecutor {
 		return features;
 	}
 
+	/**
+	 * Performs K-means clustering on the given dataset for various values of K.
+	 *
+	 * @param data The dataset to cluster
+	 * @param minK The minimum K value to test
+	 * @param maxK The maximum K value to test
+	 * @param chartTitle The title of the SSE vs. K chart
+	 * @return A chart that plots SSE vs. K
+	 */
 	private static XYChart testKMeansClustering(DatasetMatrices data, int minK, int maxK, String chartTitle) {
 		int bestKSse = -1, bestKNmi = -1;
 		double lowestSse = Double.POSITIVE_INFINITY, highestNmi = Double.NEGATIVE_INFINITY;
@@ -224,6 +240,16 @@ public class ClusteringExecutor {
 		return chart;
 	}
 
+	/**
+	 * Performs K-means and GMM clustering on the given dataset for various values of K.
+	 *
+	 * @param data The dataset to cluster
+	 * @param minK The minimum K value to test
+	 * @param maxK The maximum K value to test
+	 * @param chartTitle The title of the SSE vs. K chart
+	 * @param chartTitle2 The title of the NMI vs. K chart
+	 * @return Two charts that plot SSE and NMI vs. K for both K-means and GMM
+	 */
 	private static XYChart[] testGmmClustering(DatasetMatrices data, int minK, int maxK, String chartTitle, String chartTitle2) {
 		int bestKSse = -1, bestKNmi = -1, bestGmmSse = -1, bestGmmNmi = -1;
 		double lowestKSse = Double.POSITIVE_INFINITY, highestKNmi = Double.NEGATIVE_INFINITY,
@@ -237,7 +263,7 @@ public class ClusteringExecutor {
 		for(int k = minK; k <= maxK; k++) {
 			System.out.println("\n" + k + " Clusters");
 			KMeans kmeansClustering = new KMeans(data, k);
-			kmeansClustering.createClusters(0.001);
+			kmeansClustering.createClusters(0.01);
 
 			double ksse = kmeansClustering.getSumSquaredErrors();
 			double knmi = kmeansClustering.getNormalizedMutualInformation();

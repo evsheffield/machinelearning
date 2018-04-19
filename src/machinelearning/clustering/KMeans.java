@@ -19,6 +19,13 @@ public class KMeans extends ClusteringModel {
 		super(datasetMatrices, k);
 	}
 
+	/**
+	 * Create the clusters using a specialized version of the EM
+	 * algorithm
+	 *
+	 * @param tolerance Iteration will cease when change in SSE
+	 * decreases below this threshold
+	 */
 	@Override
 	public void createClusters(double tolerance) {
 		initializeCentroids();
@@ -36,6 +43,10 @@ public class KMeans extends ClusteringModel {
 		}
 	}
 
+	/**
+	 * Initialize the cluster centroids by selecting K random
+	 * points from our training data.
+	 */
 	private void initializeCentroids() {
 		// Pick random data points to use as the initial centroids
 		// Make sure that we don't accidentally pick the same point
@@ -44,7 +55,6 @@ public class KMeans extends ClusteringModel {
 		for(int cluster = 0; cluster < K; cluster++ ) {
 			int i;
 			do {
-//				i = cluster;
 				i = ThreadLocalRandom.current().nextInt(N);
 			} while(usedPoints.contains(i));
 			usedPoints.add(i);
@@ -52,6 +62,11 @@ public class KMeans extends ClusteringModel {
 		}
 	}
 
+	/**
+	 * Updates the cluster assignments for each instance based on the
+	 * current centroids. Each instance is assigned to the cluster
+	 * whose centroid is the smallest distance from the instance.
+	 */
 	private void makeClusterAssignments() {
 		for(int i = 0; i < N; i++) {
 			RealVector instance = designMatrix.getRowVector(i);
@@ -71,6 +86,10 @@ public class KMeans extends ClusteringModel {
 		}
 	}
 
+	/**
+	 * Updates the centroidss of the clusters to be the mean of all the instances
+	 * in the cluster
+	 */
 	private void updateCentroids() {
 		for(int cluster = 0; cluster < K; cluster++) {
 			ArrayList<RealVector> clusterInstances = getCluster(cluster);
