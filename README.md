@@ -62,3 +62,12 @@ The main entry point for the application is `ClusteringExecutor.java`, located i
 Find this file in the package explorer, then right-click on it and choose
 `Run As` -> `Java Application`. This will build models and run tests for all of the datasets
 in the assignment and output the results to the console. Any plots will be opened in Swing panels.
+
+#### A note on performance
+
+K-Means is quite performant and will return results very quickly, but GMM can take considerable time,
+especially on larger datasets and for higher values of K. Since it could take a long time to produce trend
+charts for all datasets and all values of K, for more immediate results we recommend decreasing the range
+of K-values tested in calls to `testGmmClustering` in the main method of `ClusteringExecutor`. By default,
+the trend charts are only shown when all datasets have completed running. You can comment out the tests
+for particular datasets in order to view the trend results more quickly.
