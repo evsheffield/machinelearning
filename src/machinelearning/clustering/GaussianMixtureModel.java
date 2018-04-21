@@ -159,7 +159,7 @@ public class GaussianMixtureModel extends ClusteringModel {
 	private void estimateCovarianceMatrices() {
 		// We add a small value to the diagonal of each covariance matrix to ensure that
 		// it will be invertible.
-		RealMatrix smallDiagonal = MatrixUtils.createRealIdentityMatrix(m).scalarMultiply(1e-10);
+		RealMatrix smallDiagonal = MatrixUtils.createRealIdentityMatrix(m).scalarMultiply(1e-9);
 		for(int clusterIx = 0; clusterIx < K; clusterIx++) {
 			double nKFrac = 1.0 / getCountClusterInstances(clusterIx);
 			RealMatrix covarianceMatrix = MatrixUtils.createRealMatrix(m, m);

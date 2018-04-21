@@ -159,7 +159,7 @@ public class ClusteringExecutor {
 
 		System.out.println("Yeast Dataset");
 		System.out.println("====================");
-		charts = testGmmClustering(yeastMatrices, 3, 3, "Yeast - SSE", "Yeast - NMI");
+		charts = testGmmClustering(yeastMatrices, 1, 15, "Yeast - SSE", "Yeast - NMI");
 		sseCharts.add(charts[0]);
 		nmiCharts.add(charts[1]);
 
