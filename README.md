@@ -1,10 +1,20 @@
-# CS6140 - Assignment 5
+# Java Machine Learning Toolkit
 
-Evan Sheffield
+A collection of libraries for data ingress & normalization and machine learning.
+
+Machine learning techniques available include:
+
+- Decision trees (classification and regression)
+- Linear Regression
+- Logistic Regression
+- Naive Bayes Document Classification
+- Perceptron and Kernelized Perceptron
+- SVM (using LIBSVM)
+- K-Means clustering and Gaussian Mixture Models
 
 ## Requirements
 
-This assignment was coded using Java 8 and the Eclipse IDE. To build
+This project was coded using Java 8 and the Eclipse IDE. To build
 and run the project you must have the following installed.
 
 - Java 8 SDK (author used Java 8 SDK Update 151, 64-bit). You can download
@@ -16,7 +26,7 @@ documentation: https://wiki.eclipse.org/Eclipse/Installation
 
 ## Setting up the project
 
-1. Download and unzip the project files to a convenient location on your computer.
+1. Checkout the project files to a convenient location on your computer.
 2. Open Eclipse and add the project to your workspace.
 	- `File` -> `Import` -> `General` -> `Existing projects into workspace`
 	- Browse to the location of the folder where you unzipped the project files.
@@ -34,7 +44,7 @@ following steps.
 	- For `Into folder`, choose the project that you just created
 	- Click Finished
 
-## Building and Running the project
+## Building the project
 
 ### Building
 
@@ -55,19 +65,3 @@ The jar files for these libraries can be found inside the `lib` folder. The buil
 should already be configured to include them, but if it is not you can right-click
 on the project and choose `Properties` -> `Java Build Path` -> `Add JARs`, and select
 all the `.jar` files in the `lib` folder.
-
-### Running
-
-The main entry point for the application is `ClusteringExecutor.java`, located in `src/machinelearning`.
-Find this file in the package explorer, then right-click on it and choose
-`Run As` -> `Java Application`. This will build models and run tests for all of the datasets
-in the assignment and output the results to the console. Any plots will be opened in Swing panels.
-
-#### A note on performance
-
-K-Means is quite performant and will return results very quickly, but GMM can take considerable time,
-especially on larger datasets and for higher values of K. Since it could take a long time to produce trend
-charts for all datasets and all values of K, for more immediate results we recommend decreasing the range
-of K-values tested in calls to `testGmmClustering` in the main method of `ClusteringExecutor`. By default,
-the trend charts are only shown when all datasets have completed running. You can comment out the tests
-for particular datasets in order to view the trend results more quickly.
